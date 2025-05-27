@@ -1,0 +1,155 @@
+import 'package:flutter/material.dart';
+import '../models/menu_item.dart';
+import '../models/cart_item.dart';
+
+class MenuViewModel extends ChangeNotifier {
+  List<MenuItem> _menuItems = [
+    MenuItem(
+      id: '1',
+      name: 'Dish 1',
+      category: 'Kategori 1',
+      price: 15000,
+      image: 'https://via.placeholder.com/150',
+      description:
+          'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+    ),
+    MenuItem(
+      id: '2',
+      name: 'Dish 2',
+      category: 'Kategori 2',
+      price: 20000,
+      image: 'https://via.placeholder.com/150',
+      description:
+          'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+    ),
+    MenuItem(
+      id: '3',
+      name: 'Nama Menu',
+      category: 'Kategori 1',
+      price: 10000,
+      image: 'https://via.placeholder.com/150',
+      description:
+          'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+    ),
+    MenuItem(
+      id: '4',
+      name: 'Nama Menu',
+      category: 'Kategori 2',
+      price: 10000,
+      image: 'https://via.placeholder.com/150',
+      description:
+          'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+    ),
+    MenuItem(
+      id: '5',
+      name: 'Nama Menu',
+      category: 'Kategori 3',
+      price: 10000,
+      image: 'https://via.placeholder.com/150',
+      description:
+          'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+    ),
+    MenuItem(
+      id: '6',
+      name: 'Nama Menu',
+      category: 'Kategori 1',
+      price: 10000,
+      image: 'https://via.placeholder.com/150',
+      description:
+          'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+    ),
+  ];
+
+  List<CartItem> _cartItems = [];
+  String _selectedCategory = 'Semua';
+  String _searchQuery = '';
+
+  // Getters
+  List<MenuItem> get menuItems {
+    List<MenuItem> filteredItems = _menuItems;
+
+    if (_selectedCategory != 'Semua') {
+      filteredItems = filteredItems
+          .where((item) => item.category == _selectedCategory)
+          .toList();
+    }
+
+    if (_searchQuery.isNotEmpty) {
+      filteredItems = filteredItems
+          .where(
+            (item) =>
+                item.name.toLowerCase().contains(_searchQuery.toLowerCase()),
+          )
+          .toList();
+    }
+
+    return filteredItems;
+  }
+
+  List<MenuItem> get recommendedItems => _menuItems.take(4).toList();
+  List<CartItem> get cartItems => _cartItems;
+  String get selectedCategory => _selectedCategory;
+  String get searchQuery => _searchQuery;
+
+  double get subtotal =>
+      _cartItems.fold(0, (sum, item) => sum + item.totalPrice);
+  double get shippingCost => 10000;
+  double get adminFee => 1000;
+  double get total => subtotal + shippingCost + adminFee;
+
+  int get cartItemCount =>
+      _cartItems.fold(0, (sum, item) => sum + item.quantity);
+
+  List<String> get categories => [
+    'Semua',
+    'Kategori 1',
+    'Kategori 2',
+    'Kategori 3',
+  ];
+
+  // Methods
+  void setSelectedCategory(String category) {
+    _selectedCategory = category;
+    notifyListeners();
+  }
+
+  void setSearchQuery(String query) {
+    _searchQuery = query;
+    notifyListeners();
+  }
+
+  void addToCart(MenuItem menuItem, int quantity) {
+    final existingIndex = _cartItems.indexWhere(
+      (item) => item.menuItem.id == menuItem.id,
+    );
+
+    if (existingIndex >= 0) {
+      _cartItems[existingIndex].quantity += quantity;
+    } else {
+      _cartItems.add(CartItem(menuItem: menuItem, quantity: quantity));
+    }
+    notifyListeners();
+  }
+
+  void updateCartItemQuantity(String itemId, int newQuantity) {
+    final index = _cartItems.indexWhere((item) => item.menuItem.id == itemId);
+    if (index >= 0) {
+      if (newQuantity <= 0) {
+        _cartItems.removeAt(index);
+      } else {
+        _cartItems[index].quantity = newQuantity;
+      }
+      notifyListeners();
+    }
+  }
+
+  void removeFromCart(String itemId) {
+    _cartItems.removeWhere((item) => item.menuItem.id == itemId);
+    notifyListeners();
+  }
+
+  void clearCart() {
+    _cartItems.clear();
+    notifyListeners();
+  }
+}
