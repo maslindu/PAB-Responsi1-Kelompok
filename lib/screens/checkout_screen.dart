@@ -99,6 +99,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          //pesanan title
                           Text(
                             'Pesanan',
                             style: TextStyle(
@@ -349,9 +350,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         ],
                       ),
                     ),
-
                     SizedBox(height: 16),
-
                     // Payment Method Section
                     Container(
                       margin: EdgeInsets.symmetric(horizontal: 16),
@@ -362,10 +361,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         border: Border.all(color: Colors.grey[300]!),
                       ),
                       child: Column(
+                        //payment method content
                         children: [
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
+                              //metode pembayaran
                               Text(
                                 'Metode Pembayaran',
                                 style: TextStyle(
@@ -373,32 +374,27 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                   fontSize: 16,
                                 ),
                               ),
+                              //payment option button
                               ElevatedButton(
-                                onPressed: () {
-                                  // Aksi saat tombol ditekan
-                                },
+                                onPressed: () {},
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor:
-                                      Colors.red, // Warna latar
-                                  foregroundColor:
-                                      Colors.black, // Warna teks
+                                  backgroundColor: Colors.red, // Warna latar
+                                  foregroundColor: Colors.black, // Warna teks
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(
-                                      20,
-                                    ), // Sudut rounded
+                                    borderRadius: BorderRadius.circular(20),
                                   ),
                                   padding: EdgeInsets.symmetric(
                                     horizontal: 20,
                                     vertical: 10,
-                                  ), // Padding dalam tombol
-                                  elevation:
-                                      0, // Hilangkan bayangan jika ingin datar
+                                  ),
+                                  elevation: 0,
                                 ),
                                 child: Text(
                                   'gopay',
                                   style: TextStyle(
                                     fontSize: 14,
-                                    fontWeight: FontWeight.bold,),
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                             ],
@@ -406,7 +402,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
                           SizedBox(height: 16),
 
-                          // Payment Details
+                          // Payment Details(subtotal, ongkir, admin fee, total)
                           AnimatedBuilder(
                             animation: widget.viewModel,
                             builder: (context, child) {
@@ -415,6 +411,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                   Row(
                                     mainAxisAlignment:
                                         MainAxisAlignment.spaceBetween,
+                                    //subtotal
                                     children: [
                                       Text('Subtotal'),
                                       Text(
@@ -423,6 +420,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                     ],
                                   ),
                                   SizedBox(height: 8),
+
+                                  //biaya ongkir
                                   Row(
                                     mainAxisAlignment:
                                         MainAxisAlignment.spaceBetween,
@@ -434,6 +433,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                     ],
                                   ),
                                   SizedBox(height: 8),
+
+                                  //biaya admin
                                   Row(
                                     mainAxisAlignment:
                                         MainAxisAlignment.spaceBetween,
@@ -445,6 +446,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                     ],
                                   ),
                                   Divider(height: 24),
+
+                                  //total price
                                   Row(
                                     mainAxisAlignment:
                                         MainAxisAlignment.spaceBetween,
@@ -500,6 +503,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     ),
 
                     SizedBox(height: 20),
+                    
                   ],
                 ),
               ),
