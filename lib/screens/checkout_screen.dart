@@ -373,11 +373,32 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                   fontSize: 16,
                                 ),
                               ),
-                              Text(
-                                'gopay',
-                                style: TextStyle(
-                                  color: Colors.grey[600],
-                                  fontSize: 14,
+                              ElevatedButton(
+                                onPressed: () {
+                                  // Aksi saat tombol ditekan
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor:
+                                      Colors.red, // Warna latar
+                                  foregroundColor:
+                                      Colors.black, // Warna teks
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      20,
+                                    ), // Sudut rounded
+                                  ),
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                    vertical: 10,
+                                  ), // Padding dalam tombol
+                                  elevation:
+                                      0, // Hilangkan bayangan jika ingin datar
+                                ),
+                                child: Text(
+                                  'gopay',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,),
                                 ),
                               ),
                             ],
