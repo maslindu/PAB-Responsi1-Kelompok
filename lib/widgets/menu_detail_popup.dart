@@ -47,27 +47,19 @@ class _MenuDetailPopupState extends State<MenuDetailPopup> {
                 children: [
                   // Menu Image
                   Container(
-                    width: 120,
-                    height: 120,
+                    width: 150,
+                    height: 150,
                     decoration: BoxDecoration(
                       color: Colors.grey[200],
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(12),
-                      child: Image.network(
+                      child: Image.asset(
                         widget.menuItem.image,
+                        width: 150,
+                        height: 150,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            color: Colors.grey[300],
-                            child: Icon(
-                              Icons.image,
-                              color: Colors.grey[600],
-                              size: 40,
-                            ),
-                          );
-                        },
                       ),
                     ),
                   ),

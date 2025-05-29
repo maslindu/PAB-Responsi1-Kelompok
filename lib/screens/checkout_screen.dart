@@ -150,8 +150,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                             borderRadius: BorderRadius.circular(
                                               8,
                                             ),
-                                            child: Image.network(
+                                            child: Image.asset(
                                               cartItem.menuItem.image,
+                                              width: 150,
+                                              height: 150,
                                               fit: BoxFit.cover,
                                               errorBuilder:
                                                   (context, error, stackTrace) {
