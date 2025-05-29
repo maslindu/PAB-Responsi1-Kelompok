@@ -27,7 +27,7 @@ class MenuViewModel extends ChangeNotifier {
       name: 'Roti Bakar',
       category: 'Kategori 2',
       price: 10000,
-      image: 'assets/images/Roti Bakar.png',
+      image: 'assets/images/Roti bakar.png',
       description:
           'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
     ),
@@ -45,7 +45,7 @@ class MenuViewModel extends ChangeNotifier {
       name: 'Soda Gembira',
       category: 'Kategori 3',
       price: 10000,
-      image: 'assets/images/Soda Gembira.png',
+      image: 'assets/images/Soda gembira.png',
       description:
           'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
     ),
@@ -54,7 +54,7 @@ class MenuViewModel extends ChangeNotifier {
       name: 'Milk Tea',
       category: 'Kategori 3',
       price: 10000,
-      image: 'assets/images/HOW TO MAKE MILK TEA.png',
+      image: 'assets/images/How To Make Milk Tea.png',
       description:
           'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
     ),
