@@ -282,6 +282,12 @@ class _MenuScreenState extends State<MenuScreen> {
                             ? Colors.orange[100]!
                             : Colors.white;
                         break;
+                      case 3:
+                        borderColor = Colors.blue;
+                        backgroundColor = isSelected
+                            ? Colors.blue[100]!
+                            : Colors.white;
+                        break;
                       default:
                         borderColor = Colors.grey;
                         backgroundColor = Colors.white;

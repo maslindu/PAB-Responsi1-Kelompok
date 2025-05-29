@@ -7,7 +7,7 @@ class MenuViewModel extends ChangeNotifier {
     MenuItem(
       id: '1',
       name: 'Nasi Goreng',
-      category: 'Kategori 1',
+      category: 'Makanan Berat',
       price: 15000,
       image: 'assets/images/Fried Rice Aesthetic.png',
       description:
@@ -16,7 +16,7 @@ class MenuViewModel extends ChangeNotifier {
     MenuItem(
       id: '2',
       name: 'Nasi Uduk',
-      category: 'Kategori 1',
+      category: 'Makanan Berat',
       price: 13000,
       image: 'assets/images/Nasi Uduk.png',
       description:
@@ -25,7 +25,7 @@ class MenuViewModel extends ChangeNotifier {
     MenuItem(
       id: '3',
       name: 'Roti Bakar',
-      category: 'Kategori 2',
+      category: 'Makanan Ringan',
       price: 10000,
       image: 'assets/images/Roti bakar.png',
       description:
@@ -34,7 +34,7 @@ class MenuViewModel extends ChangeNotifier {
     MenuItem(
       id: '4',
       name: 'Kentang Goreng',
-      category: 'Kategori 2',
+      category: 'Makanan Ringan',
       price: 10000,
       image: 'assets/images/KENTANG GORENG.png',
       description:
@@ -43,7 +43,7 @@ class MenuViewModel extends ChangeNotifier {
     MenuItem(
       id: '5',
       name: 'Soda Gembira',
-      category: 'Kategori 3',
+      category: 'Minuman',
       price: 10000,
       image: 'assets/images/Soda gembira.png',
       description:
@@ -52,9 +52,54 @@ class MenuViewModel extends ChangeNotifier {
     MenuItem(
       id: '6',
       name: 'Milk Tea',
-      category: 'Kategori 3',
+      category: 'Minuman',
       price: 10000,
       image: 'assets/images/How To Make Milk Tea.png',
+      description:
+          'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+    ),
+    MenuItem(
+      id: '7',
+      name: 'Es Krim',
+      category: 'Dessert',
+      price: 12000,
+      image: 'assets/images/Es Krim.png',
+      description:
+          'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+    ),
+    MenuItem(
+      id: '8',
+      name: 'Brownies',
+      category: 'Dessert',
+      price: 12000,
+      image: 'assets/images/Brownies.png',
+      description:
+          'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+    ),
+    MenuItem(
+      id: '9',
+      name: 'Es Teh',
+      category: 'Minuman',
+      price: 4000,
+      image: 'assets/images/Es Teh.png',
+      description:
+          'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+    ),
+    MenuItem(
+      id: '10',
+      name: 'Ayam Bakar',
+      category: 'Makanan Berat',
+      price: 18000,
+      image: 'assets/images/Ayam Bakar.png',
+      description:
+          'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+    ),
+    MenuItem(
+      id: '11',
+      name: 'Sate Ayam',
+      category: 'Makanan Berat',
+      price: 20000,
+      image: 'assets/images/Sate Ayam.png',
       description:
           'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
     ),
@@ -102,9 +147,10 @@ class MenuViewModel extends ChangeNotifier {
 
   List<String> get categories => [
     'Semua',
-    'Kategori 1',
-    'Kategori 2',
-    'Kategori 3',
+    'Makanan Berat',
+    'Makanan Ringan',
+    'Dessert',
+    'Minuman',
   ];
 
   // Methods
