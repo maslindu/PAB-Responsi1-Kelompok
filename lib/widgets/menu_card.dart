@@ -38,15 +38,11 @@ class MenuCard extends StatelessWidget {
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-                  child: Image.network(
+                  child: Image.asset(
                     menuItem.image,
+                    width: 150,
+                    height: 150,
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        color: Colors.grey[300],
-                        child: Icon(Icons.image, color: Colors.grey[600]),
-                      );
-                    },
                   ),
                 ),
               ),

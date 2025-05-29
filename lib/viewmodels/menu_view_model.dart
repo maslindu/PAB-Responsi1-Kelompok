@@ -6,55 +6,55 @@ class MenuViewModel extends ChangeNotifier {
   List<MenuItem> _menuItems = [
     MenuItem(
       id: '1',
-      name: 'Dish 1',
+      name: 'Nasi Goreng',
       category: 'Kategori 1',
       price: 15000,
-      image: 'https://via.placeholder.com/150',
+      image: 'assets/images/Fried Rice Aesthetic.png',
       description:
           'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
     ),
     MenuItem(
       id: '2',
-      name: 'Dish 2',
-      category: 'Kategori 2',
-      price: 20000,
-      image: 'https://via.placeholder.com/150',
+      name: 'Nasi Uduk',
+      category: 'Kategori 1',
+      price: 13000,
+      image: 'assets/images/Nasi Uduk.png',
       description:
           'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
     ),
     MenuItem(
       id: '3',
-      name: 'Nama Menu',
-      category: 'Kategori 1',
+      name: 'Roti Bakar',
+      category: 'Kategori 2',
       price: 10000,
-      image: 'https://via.placeholder.com/150',
+      image: 'assets/images/Roti Bakar.png',
       description:
           'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
     ),
     MenuItem(
       id: '4',
-      name: 'Nama Menu',
+      name: 'Kentang Goreng',
       category: 'Kategori 2',
       price: 10000,
-      image: 'https://via.placeholder.com/150',
+      image: 'assets/images/KENTANG GORENG.png',
       description:
           'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
     ),
     MenuItem(
       id: '5',
-      name: 'Nama Menu',
+      name: 'Soda Gembira',
       category: 'Kategori 3',
       price: 10000,
-      image: 'https://via.placeholder.com/150',
+      image: 'assets/images/Soda Gembira.png',
       description:
           'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
     ),
     MenuItem(
       id: '6',
-      name: 'Nama Menu',
-      category: 'Kategori 1',
+      name: 'Milk Tea',
+      category: 'Kategori 3',
       price: 10000,
-      image: 'https://via.placeholder.com/150',
+      image: 'assets/images/HOW TO MAKE MILK TEA.png',
       description:
           'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
     ),
