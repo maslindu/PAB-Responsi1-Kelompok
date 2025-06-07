@@ -37,56 +37,59 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           children: [
             SizedBox(height: 16),
 
-            // Address Section
-            Container(
-              margin: EdgeInsets.symmetric(horizontal: 16),
-              padding: EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Color(0xFFFBD38D),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.black, width: 2),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.location_on, color: Colors.black),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Nama Penerima',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        Text('Jl. surakarta no.xx'),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.black),
-                    ),
-                    child: Text(
-                      'Ganti Alamat',
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            SizedBox(height: 16),
-
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
                   children: [
+                    // Address Section - Moved inside SingleChildScrollView
+                    Container(
+                      margin: EdgeInsets.symmetric(horizontal: 16),
+                      padding: EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Color.fromRGBO(254, 216, 102, 1),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.black, width: 2),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.location_on, color: Colors.black),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Nama Penerima',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                                Text('Jl. surakarta no.xx'),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: Colors.black),
+                            ),
+                            child: Text(
+                              'Ganti Alamat',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    SizedBox(height: 16),
+
                     // Order Section
                     Container(
                       margin: EdgeInsets.symmetric(horizontal: 16),
@@ -196,11 +199,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                                 children: [
                                                   // Decrease button
                                                   Container(
-                                                    width: 30,
-                                                    height: 30,
+                                                    width: 24, // Ukuran dikecilkan
+                                                    height: 24, // Ukuran dikecilkan
                                                     decoration: BoxDecoration(
                                                       color: Colors.blue,
                                                       shape: BoxShape.circle,
+                                                      border: Border.all(color: Colors.black, width: 1), // Tambah border hitam
                                                     ),
                                                     child: IconButton(
                                                       padding: EdgeInsets.zero,
@@ -217,7 +221,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                                       icon: Icon(
                                                         Icons.remove,
                                                         color: Colors.white,
-                                                        size: 16,
+                                                        size: 14, // Ukuran icon dikecilkan
                                                       ),
                                                     ),
                                                   ),
@@ -225,7 +229,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                                   Container(
                                                     margin:
                                                         EdgeInsets.symmetric(
-                                                          horizontal: 12,
+                                                          horizontal: 8,
                                                         ),
                                                     child: Text(
                                                       cartItem.quantity
@@ -240,11 +244,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
                                                   // Increase button
                                                   Container(
-                                                    width: 30,
-                                                    height: 30,
+                                                    width: 24, // Ukuran dikecilkan
+                                                    height: 24, // Ukuran dikecilkan
                                                     decoration: BoxDecoration(
                                                       color: Colors.blue,
                                                       shape: BoxShape.circle,
+                                                      border: Border.all(color: Colors.black, width: 1), // Tambah border hitam
                                                     ),
                                                     child: IconButton(
                                                       padding: EdgeInsets.zero,
@@ -261,47 +266,55 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                                       icon: Icon(
                                                         Icons.add,
                                                         color: Colors.white,
-                                                        size: 16,
+                                                        size: 14, // Ukuran icon dikecilkan
+                                                      ),
+                                                    ),
+                                                  ),
+
+                                                  SizedBox(width: 8), // Jarak antara tombol plus dan delete
+
+                                                  // Delete button dipindah ke samping tombol plus
+                                                  Container(
+                                                    width: 24, // Ukuran disesuaikan dengan tombol lain
+                                                    height: 24, // Ukuran disesuaikan dengan tombol lain
+                                                    child: IconButton(
+                                                      padding: EdgeInsets.zero,
+                                                      onPressed: () {
+                                                        widget.viewModel
+                                                            .removeFromCart(
+                                                              cartItem
+                                                                  .menuItem
+                                                                  .id,
+                                                            );
+                                                      },
+                                                      icon: Icon(
+                                                        Icons.delete,
+                                                        color: Colors.red,
+                                                        size: 18, // Ukuran icon dikecilkan
                                                       ),
                                                     ),
                                                   ),
 
                                                   Spacer(),
 
-                                                  // Delete button
-                                                  IconButton(
-                                                    onPressed: () {
-                                                      widget.viewModel
-                                                          .removeFromCart(
-                                                            cartItem
-                                                                .menuItem
-                                                                .id,
-                                                          );
-                                                    },
-                                                    icon: Icon(
-                                                      Icons.delete,
-                                                      color: Colors.red,
-                                                    ),
+                                                  // Price
+                                                  Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment.end,
+                                                    children: [
+                                                      Text(
+                                                        'Rp ${cartItem.totalPrice.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}',
+                                                        style: TextStyle(
+                                                          fontWeight: FontWeight.bold,
+                                                          fontSize: 14,
+                                                        ),
+                                                      ),
+                                                    ],
                                                   ),
                                                 ],
                                               ),
                                             ],
                                           ),
-                                        ),
-
-                                        // Price
-                                        Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.end,
-                                          children: [
-                                            Text(
-                                              'Rp ${cartItem.totalPrice.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}',
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 14,
-                                              ),
-                                            ),
-                                          ],
                                         ),
                                       ],
                                     ),
@@ -505,7 +518,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     ),
 
                     SizedBox(height: 20),
-                    
                   ],
                 ),
               ),

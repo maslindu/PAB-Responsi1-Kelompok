@@ -11,7 +11,7 @@ class MenuViewModel extends ChangeNotifier {
       price: 15000,
       image: 'assets/images/Fried Rice Aesthetic.png',
       description:
-          'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+          'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiuf agegrgffkjlhagbahbg ahbfuwe wwhkhhfbjkasnfdclnasiufbb  hiwofhjwkugfbyuiabvybdscvhksabvf whf piouqfhiuf smod tempor incididunt ut labore et dolore magna aliqua.',
     ),
     MenuItem(
       id: '2',

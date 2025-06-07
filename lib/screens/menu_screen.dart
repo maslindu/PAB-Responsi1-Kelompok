@@ -77,8 +77,9 @@ class _MenuScreenState extends State<MenuScreen> {
                 margin: EdgeInsets.all(16),
                 padding: EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Color(0xFFE53E3E),
+                  color: Color.fromRGBO(254, 74, 73, 1),
                   borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.black, width: 2)
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -140,6 +141,7 @@ class _MenuScreenState extends State<MenuScreen> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.black, width: 1)
                       ),
                       child: TextField(
                         controller: _searchController,
@@ -163,7 +165,7 @@ class _MenuScreenState extends State<MenuScreen> {
                 margin: EdgeInsets.symmetric(horizontal: 16),
                 padding: EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Color(0xFFFBD38D),
+                  color: Color.fromRGBO(254, 216, 102, 1),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: Colors.black, width: 2),
                 ),
