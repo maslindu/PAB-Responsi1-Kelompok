@@ -3,6 +3,7 @@ import '../viewmodels/menu_view_model.dart';
 import '../widgets/menu_card.dart';
 import '../widgets/menu_detail_popup.dart';
 import 'checkout_screen.dart';
+import 'sliding_sidebar.dart';
 
 class MenuScreen extends StatefulWidget {
   @override
@@ -63,6 +64,21 @@ class _MenuScreenState extends State<MenuScreen> {
     );
   }
 
+  void _showSlidingSidebar() {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: '',
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, animation1, animation2) {
+        return Material(
+          type: MaterialType.transparency,
+          child: const SlidingSidebar(),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -79,7 +95,7 @@ class _MenuScreenState extends State<MenuScreen> {
                 decoration: BoxDecoration(
                   color: Color.fromRGBO(254, 74, 73, 1),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.black, width: 2)
+                  border: Border.all(color: Colors.black, width: 2),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -141,7 +157,7 @@ class _MenuScreenState extends State<MenuScreen> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.black, width: 1)
+                        border: Border.all(color: Colors.black, width: 1),
                       ),
                       child: TextField(
                         controller: _searchController,
@@ -387,7 +403,13 @@ class _MenuScreenState extends State<MenuScreen> {
             ],
             currentIndex: _selectedIndex,
             selectedItemColor: Colors.red,
-            onTap: _onItemTapped,
+            onTap: (index) {
+              if (index == 2) {
+                _showSlidingSidebar();
+              } else {
+                _onItemTapped(index);
+              }
+            },
           );
         },
       ),

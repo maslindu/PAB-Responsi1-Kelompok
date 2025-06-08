@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../viewmodels/menu_view_model.dart';
+import 'sliding_sidebar.dart'; // Import SlidingSidebar
 
 class CheckoutScreen extends StatefulWidget {
   final MenuViewModel viewModel;
@@ -14,18 +15,31 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final TextEditingController _promoController = TextEditingController();
   int _selectedIndex = 1; // Cart tab selected
 
+  void _showSlidingSidebar() {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: '',
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, animation1, animation2) {
+        return Material(
+          type: MaterialType.transparency,
+          child: const SlidingSidebar(),
+        );
+      },
+    );
+  }
+
+  // Modify _onItemTapped method
   void _onItemTapped(int index) {
     if (index == 0) {
       // Home tab
-      Navigator.pop(context); // This will return to MenuScreen
+      Navigator.pop(context);
     } else if (index == 2) {
       // Menu tab
-      Navigator.pop(context); // Return to MenuScreen
+      _showSlidingSidebar(); // Add this line
     }
-    // Don't update selectedIndex for navigation actions
-    setState(() {
-      _selectedIndex = index;
-    });
+   
   }
 
   @override
@@ -199,12 +213,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                                 children: [
                                                   // Decrease button
                                                   Container(
-                                                    width: 24, // Ukuran dikecilkan
-                                                    height: 24, // Ukuran dikecilkan
+                                                    width:
+                                                        24, // Ukuran dikecilkan
+                                                    height:
+                                                        24, // Ukuran dikecilkan
                                                     decoration: BoxDecoration(
                                                       color: Colors.blue,
                                                       shape: BoxShape.circle,
-                                                      border: Border.all(color: Colors.black, width: 1), // Tambah border hitam
+                                                      border: Border.all(
+                                                        color: Colors.black,
+                                                        width: 1,
+                                                      ), // Tambah border hitam
                                                     ),
                                                     child: IconButton(
                                                       padding: EdgeInsets.zero,
@@ -221,7 +240,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                                       icon: Icon(
                                                         Icons.remove,
                                                         color: Colors.white,
-                                                        size: 14, // Ukuran icon dikecilkan
+                                                        size:
+                                                            14, // Ukuran icon dikecilkan
                                                       ),
                                                     ),
                                                   ),
@@ -244,12 +264,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
                                                   // Increase button
                                                   Container(
-                                                    width: 24, // Ukuran dikecilkan
-                                                    height: 24, // Ukuran dikecilkan
+                                                    width:
+                                                        24, // Ukuran dikecilkan
+                                                    height:
+                                                        24, // Ukuran dikecilkan
                                                     decoration: BoxDecoration(
                                                       color: Colors.blue,
                                                       shape: BoxShape.circle,
-                                                      border: Border.all(color: Colors.black, width: 1), // Tambah border hitam
+                                                      border: Border.all(
+                                                        color: Colors.black,
+                                                        width: 1,
+                                                      ), // Tambah border hitam
                                                     ),
                                                     child: IconButton(
                                                       padding: EdgeInsets.zero,
@@ -266,17 +291,21 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                                       icon: Icon(
                                                         Icons.add,
                                                         color: Colors.white,
-                                                        size: 14, // Ukuran icon dikecilkan
+                                                        size:
+                                                            14, // Ukuran icon dikecilkan
                                                       ),
                                                     ),
                                                   ),
 
-                                                  SizedBox(width: 8), // Jarak antara tombol plus dan delete
-
+                                                  SizedBox(
+                                                    width: 8,
+                                                  ), // Jarak antara tombol plus dan delete
                                                   // Delete button dipindah ke samping tombol plus
                                                   Container(
-                                                    width: 24, // Ukuran disesuaikan dengan tombol lain
-                                                    height: 24, // Ukuran disesuaikan dengan tombol lain
+                                                    width:
+                                                        24, // Ukuran disesuaikan dengan tombol lain
+                                                    height:
+                                                        24, // Ukuran disesuaikan dengan tombol lain
                                                     child: IconButton(
                                                       padding: EdgeInsets.zero,
                                                       onPressed: () {
@@ -290,7 +319,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                                       icon: Icon(
                                                         Icons.delete,
                                                         color: Colors.red,
-                                                        size: 18, // Ukuran icon dikecilkan
+                                                        size:
+                                                            18, // Ukuran icon dikecilkan
                                                       ),
                                                     ),
                                                   ),
@@ -305,7 +335,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                                       Text(
                                                         'Rp ${cartItem.totalPrice.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}',
                                                         style: TextStyle(
-                                                          fontWeight: FontWeight.bold,
+                                                          fontWeight:
+                                                              FontWeight.bold,
                                                           fontSize: 14,
                                                         ),
                                                       ),
