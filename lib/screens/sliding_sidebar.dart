@@ -33,200 +33,219 @@ class _SlidingSidebarState extends State<SlidingSidebar>
   }
 
   @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _animation,
-      builder: (context, child) {
-        return Stack(
-          children: [
-            // Blurred background
-            GestureDetector(
-              onTap: () {
-                _controller.reverse().then((_) {
-                  Navigator.pop(context);
-                });
-              },
-              child: BackdropFilter(
-                filter: ImageFilter.blur(
-                  sigmaX: 5 * _animation.value,
-                  sigmaY: 5 * _animation.value,
-                ),
-                child: Container(
-                  color: Colors.black.withOpacity(0.3 * _animation.value),
-                ),
+Widget build(BuildContext context) {
+  return AnimatedBuilder(
+    animation: _animation,
+    builder: (context, child) {
+      return Stack(
+        children: [
+          // Blurred background
+          GestureDetector(
+            onTap: () {
+              _controller.reverse().then((_) {
+                Navigator.pop(context);
+              });
+            },
+            child: BackdropFilter(
+              filter: ImageFilter.blur(
+                sigmaX: 5 * _animation.value,
+                sigmaY: 5 * _animation.value,
+              ),
+              child: Container(
+                color: Colors.black.withOpacity(0.3 * _animation.value),
               ),
             ),
-            // Sliding menu from right
-            Positioned(
-              right: 0,
-              top: 0,
-              bottom: 0,
-              child: Transform.translate(
-                offset: Offset(
-                  MediaQuery.of(context).size.width *
-                      0.75 *
-                      (1 - _animation.value),
-                  0,
-                ),
-                child: Container(
-                  width: MediaQuery.of(context).size.width * 0.75,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(20),
-                      bottomLeft: Radius.circular(20),
-                    ),
-                    border: Border.all(color: Colors.black, width: 1),
-                    // Tambahkan shadow untuk efek lebih baik
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
-                        spreadRadius: 1,
-                        blurRadius: 10,
-                        offset: const Offset(-5, 0),
-                      ),
-                    ],
+          ),
+          // Sliding menu from right
+          Positioned(
+            right: 0,
+            top: 0,
+            bottom: 0,
+            child: Transform.translate(
+              offset: Offset(
+                MediaQuery.of(context).size.width *
+                    0.75 *
+                    (1 - _animation.value),
+                0,
+              ),
+              child: Container(
+                width: MediaQuery.of(context).size.width * 0.75,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    bottomLeft: Radius.circular(20),
                   ),
-                  // Tambahkan ClipRRect untuk memastikan konten mengikuti rounded corners
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(20),
-                      bottomLeft: Radius.circular(20),
+                  border: Border.all(color: Colors.black, width: 1),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      spreadRadius: 1,
+                      blurRadius: 10,
+                      offset: const Offset(-5, 0),
                     ),
-                    child: Column(
-                      children: [
-                        // User Profile Section
-                        Container(
-                          padding: const EdgeInsets.all(20.0),
-                          decoration: const BoxDecoration(
-                            border: Border(
-                              bottom: BorderSide(
-                                color: Colors.grey,
-                                width: 0.5,
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    bottomLeft: Radius.circular(20),
+                  ),
+                  child: SafeArea(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16.0),
+                      child: Column(
+                        children: [
+                          // User Profile Section
+                          Container(
+                            padding: const EdgeInsets.all(20.0),
+                            decoration: const BoxDecoration(
+                              border: Border(
+                                bottom: BorderSide(
+                                  color: Colors.grey,
+                                  width: 0.5,
+                                ),
                               ),
                             ),
-                          ),
-                          child: Row(
-                            children: [
-                              // Profile Avatar
-                              Container(
-                                width: 60,
-                                height: 60,
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFFD3D3D3),
-                                  shape: BoxShape.circle,
+                            child: Row(
+                              children: [
+                                // Profile Avatar
+                                Container(
+                                  width: 60,
+                                  height: 60,
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFFD3D3D3),
+                                    shape: BoxShape.circle,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(width: 15),
-                              // User Info
-                              const Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Nama User',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.black,
+                                const SizedBox(width: 15),
+                                // User Info
+                                const Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Nama User',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.black,
+                                        ),
                                       ),
-                                    ),
-                                    SizedBox(height: 4),
-                                    Text(
-                                      'email@email.com',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.black87,
+                                      SizedBox(height: 4),
+                                      Text(
+                                        'email@email.com',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.black87,
+                                        ),
                                       ),
-                                    ),
-                                    SizedBox(height: 2),
-                                    Text(
-                                      '081234567890',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.black87,
+                                      SizedBox(height: 2),
+                                      Text(
+                                        '081234567890',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.black87,
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
 
-                        // Menu Items
-                        Expanded(
-                          child: ListView(
-                            padding: EdgeInsets.zero,
-                            children: [
-                              _buildMenuItem(
-                                icon: Icon(Icons.location_on_outlined),
-                                title: 'Daftar Alamat',
-                                onTap: () {
-                                  Navigator.pop(context); // Close the sidebar
-                                  Navigator.push( // Navigate to AddressListScreen
-                                    context, 
-                                    MaterialPageRoute(
-                                      builder: (context) => AddressListScreen(),
-                                    ),
-                                  );
-                                },
-                              ),
-                              _buildMenuItem(
-                                title: 'Daftar Transaksi',
-                                onTap: () {
-                                  Navigator.pop(context);
-                                },
-                              ),
-                              _buildMenuItem(
-                                title: 'Menu Favorit',
-                                onTap: () {
-                                  Navigator.pop(context); // Close the sidebar
-                                  Navigator.push( // Navigate to FavoriteMenuScreen
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => const FavoriteMenuScreen(),
-                                    ),
-                                  );
-                                },
-                              ),
-                              _buildMenuItem(
-                                title: 'Promo yang Dimiliki',
-                                onTap: () {
-                                  Navigator.pop(context);
-                                },
-                              ),
-                              const SizedBox(height: 16), // Spacer before logout
-                              Container(
-                                alignment: Alignment.center,
-                                child: TextButton(
-                                  onPressed: () {
+                          // Menu Items
+                          Expanded(
+                            child: ListView(
+                              padding: EdgeInsets.zero,
+                              children: [
+                                _buildMenuItem(
+                                  icon: Icon(Icons.location_on_outlined),
+                                  title: 'Daftar Alamat',
+                                  onTap: () {
+                                    Navigator.pop(context);
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => AddressListScreen(),
+                                      ),
+                                    );
+                                  },
+                                ),
+                                _buildMenuItem(
+                                  icon: Image.asset(
+                                    'assets/images/icons/ActivityHistory.png',
+                                    width: 24,
+                                    height: 24,
+                                  ),
+                                  title: 'Daftar Transaksi',
+                                  onTap: () {
                                     Navigator.pop(context);
                                   },
-                                  child: const Text(
-                                    'LOGOUT',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.red,
+                                ),
+                                _buildMenuItem(
+                                  icon: Image.asset(
+                                    'assets/images/icons/Food.png',
+                                    width: 24,
+                                    height: 24,
+                                  ),
+                                  title: 'Menu Favorit',
+                                  onTap: () {
+                                    Navigator.pop(context);
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => const FavoriteMenuScreen(),
+                                      ),
+                                    );
+                                  },
+                                ),
+                                _buildMenuItem(
+                                  icon: Image.asset(
+                                    'assets/images/icons/LoyaltyCard.png',
+                                    width: 24,
+                                    height: 24,
+                                  ),
+                                  title: 'Promo yang Dimiliki',
+                                  onTap: () {
+                                    Navigator.pop(context);
+                                  },
+                                ),
+                                const SizedBox(height: 16),
+                                Container(
+                                  alignment: Alignment.center,
+                                  child: TextButton(
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                    },
+                                    child: const Text(
+                                      'LOGOUT',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.red,
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          ],
-        );
-      },
-    );
-  }
+          ),
+        ],
+      );
+    },
+  );
+}
+
 
   Widget _buildMenuItem({
     Widget? icon,
