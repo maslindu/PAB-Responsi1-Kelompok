@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'address_list_screen.dart';
+import 'favorite_menu_screen.dart'; // Import the new screen
 
 class SlidingSidebar extends StatefulWidget {
   const SlidingSidebar({Key? key}) : super(key: key);
@@ -180,7 +181,13 @@ class _SlidingSidebarState extends State<SlidingSidebar>
                               _buildMenuItem(
                                 title: 'Menu Favorit',
                                 onTap: () {
-                                  Navigator.pop(context);
+                                  Navigator.pop(context); // Close the sidebar
+                                  Navigator.push( // Navigate to FavoriteMenuScreen
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const FavoriteMenuScreen(),
+                                    ),
+                                  );
                                 },
                               ),
                               _buildMenuItem(

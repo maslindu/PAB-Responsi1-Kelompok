@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart'; // Import hive_flutter
 import '../models/menu_item.dart';
 
 class MenuDetailPopup extends StatefulWidget {
@@ -17,6 +18,44 @@ class MenuDetailPopup extends StatefulWidget {
 
 class _MenuDetailPopupState extends State<MenuDetailPopup> {
   int quantity = 1;
+  late Box<MenuItem> favoriteMenusBox; // Declare Hive box
+  bool _isFavorite = false; // State for favorite icon
+
+  @override
+  void initState() {
+    super.initState();
+    favoriteMenusBox = Hive.box<MenuItem>('favoriteMenus'); // Get the box
+    _checkFavoriteStatus();
+  }
+
+  void _checkFavoriteStatus() {
+    setState(() {
+      _isFavorite = favoriteMenusBox.containsKey(widget.menuItem.id);
+    });
+  }
+
+  void _toggleFavorite() {
+    setState(() {
+      if (_isFavorite) {
+        favoriteMenusBox.delete(widget.menuItem.id);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${widget.menuItem.name} dihapus dari favorit'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      } else {
+        favoriteMenusBox.put(widget.menuItem.id, widget.menuItem);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${widget.menuItem.name} ditambahkan ke favorit'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+      _isFavorite = !_isFavorite;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -140,72 +179,87 @@ class _MenuDetailPopupState extends State<MenuDetailPopup> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          'Jumlah',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+                        // Favorite Button
+                        IconButton(
+                          icon: Icon(
+                            _isFavorite ? Icons.favorite : Icons.favorite_border,
+                            color: Colors.red,
                           ),
+                          onPressed: _toggleFavorite,
                         ),
-                        Row(
-                          children: [
-                            Container(
-                              width: 30,
-                              height: 30,
-                              decoration: BoxDecoration(
-                                color: Colors.blue,
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: Colors.black,
-                                  width: 1,
-                                ),
-                              ),
-                              child: IconButton(
-                                padding: EdgeInsets.zero,
-                                onPressed: quantity > 1
-                                    ? () {
-                                        setState(() {
-                                          quantity--;
-                                        });
-                                      }
-                                    : null,
-                                icon: Icon(Icons.remove, color: Colors.white),
-                                iconSize: 14,
-                              ),
-                            ),
-                            Container(
-                              margin: EdgeInsets.symmetric(horizontal: 16),
-                              child: Text(
-                                quantity.toString(),
+                        Expanded( // Wrap the rest of the content in an Expanded widget
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Jumlah',
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                            ),
-                            Container(
-                              width: 30,
-                              height: 30,
-                              decoration: BoxDecoration(
-                                color: Colors.blue,
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: Colors.black,
-                                  width: 1,
-                                ),
+                              Row(
+                                children: [
+                                  Container(
+                                    width: 30,
+                                    height: 30,
+                                    decoration: BoxDecoration(
+                                      color: Colors.blue,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: Colors.black,
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: IconButton(
+                                      padding: EdgeInsets.zero,
+                                      onPressed: quantity > 1
+                                          ? () {
+                                              setState(() {
+                                                quantity--;
+                                              });
+                                            }
+                                          : null,
+                                      icon: Icon(Icons.remove, color: Colors.white),
+                                      iconSize: 14,
+                                    ),
+                                  ),
+                                  Container(
+                                    margin: EdgeInsets.symmetric(horizontal: 16),
+                                    child: Text(
+                                      quantity.toString(),
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  Container(
+                                    width: 30,
+                                    height: 30,
+                                    decoration: BoxDecoration(
+                                      color: Colors.blue,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: Colors.black,
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: IconButton(
+                                      padding: EdgeInsets.zero,
+                                      onPressed: () {
+                                        setState(() {
+                                          quantity++;
+                                        });
+                                      },
+                                      icon: Icon(Icons.add, color: Colors.white),
+                                      iconSize: 14,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              child: IconButton(
-                                padding: EdgeInsets.zero,
-                                onPressed: () {
-                                  setState(() {
-                                    quantity++;
-                                  });
-                                },
-                                icon: Icon(Icons.add, color: Colors.white),
-                                iconSize: 14,
-                              ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ],
                     ),

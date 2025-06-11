@@ -395,6 +395,7 @@ class _MenuScreenState extends State<MenuScreen> {
                   );
                 },
               ),
+              SizedBox(height: 80), // Add extra space at the bottom to prevent overflow
             ],
           ),
         ),
