@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import '../models/address.dart';
 import '../viewmodels/menu_view_model.dart';
 import 'sliding_sidebar.dart'; // Import SlidingSidebar
+import 'address_list_screen.dart'; // Import AddressListScreen
 
 class CheckoutScreen extends StatefulWidget {
   final MenuViewModel viewModel;
@@ -14,6 +17,23 @@ class CheckoutScreen extends StatefulWidget {
 class _CheckoutScreenState extends State<CheckoutScreen> {
   final TextEditingController _promoController = TextEditingController();
   int _selectedIndex = 1; // Cart tab selected
+  Address? _selectedAddress; // Add state variable for selected address
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDefaultAddress(); // Load a default address or the last selected one
+  }
+
+  // Add a method to load a default address (optional, but good practice)
+  void _loadDefaultAddress() async {
+    final addressBox = Hive.box<Address>('addresses');
+    if (addressBox.isNotEmpty) {
+      setState(() {
+        _selectedAddress = addressBox.getAt(0); // Load the first address as default
+      });
+    }
+  }
 
   void _showSlidingSidebar() {
     showGeneralDialog(
@@ -39,7 +59,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       // Menu tab
       _showSlidingSidebar(); // Add this line
     }
-   
   }
 
   @override
@@ -73,28 +92,43 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Nama Penerima',
-                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                  _selectedAddress?.recipientName ?? 'Nama Penerima', // Use selected address or default
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16), // Added fontSize
                                 ),
-                                Text('Jl. surakarta no.xx'),
+                                Text(_selectedAddress?.fullAddress ?? 'Alamat penerima'), // Use selected address or default
                               ],
                             ),
                           ),
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: Colors.black),
-                            ),
-                            child: Text(
-                              'Ganti Alamat',
-                              style: TextStyle(
-                                color: Colors.black,
-                                fontWeight: FontWeight.w500,
+                          GestureDetector(
+                            onTap: () async { // Make the onTap async
+                              final selectedAddress = await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => AddressListScreen(),
+                                ),
+                              );
+                              if (selectedAddress != null && selectedAddress is Address) {
+                                setState(() {
+                                  _selectedAddress = selectedAddress;
+                                });
+                              }
+                            },
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: Colors.black),
+                              ),
+                              child: Text(
+                                'Ganti Alamat',
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             ),
                           ),

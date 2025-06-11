@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
+import 'address_list_screen.dart';
 
 class SlidingSidebar extends StatefulWidget {
   const SlidingSidebar({Key? key}) : super(key: key);
@@ -161,7 +162,13 @@ class _SlidingSidebarState extends State<SlidingSidebar>
                                 icon: Icon(Icons.location_on_outlined),
                                 title: 'Daftar Alamat',
                                 onTap: () {
-                                  Navigator.pop(context);
+                                  Navigator.pop(context); // Close the sidebar
+                                  Navigator.push( // Navigate to AddressListScreen
+                                    context, 
+                                    MaterialPageRoute(
+                                      builder: (context) => AddressListScreen(),
+                                    ),
+                                  );
                                 },
                               ),
                               _buildMenuItem(

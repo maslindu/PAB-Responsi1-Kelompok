@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import '../viewmodels/menu_view_model.dart';
 import '../widgets/menu_card.dart';
 import '../widgets/menu_detail_popup.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import '../models/address.dart';
 import 'checkout_screen.dart';
 import 'sliding_sidebar.dart';
+import 'address_list_screen.dart';
 
 class MenuScreen extends StatefulWidget {
   @override
@@ -14,6 +17,7 @@ class _MenuScreenState extends State<MenuScreen> {
   final MenuViewModel _viewModel = MenuViewModel();
   final TextEditingController _searchController = TextEditingController();
   int _selectedIndex = 0;
+  Address? _selectedAddress; // Add state variable for selected address
 
   @override
   void initState() {
@@ -21,6 +25,17 @@ class _MenuScreenState extends State<MenuScreen> {
     _searchController.addListener(() {
       _viewModel.setSearchQuery(_searchController.text);
     });
+    _loadDefaultAddress(); // Load a default address or the last selected one
+  }
+
+  // Add a method to load a default address (optional, but good practice)
+  void _loadDefaultAddress() async {
+    final addressBox = Hive.box<Address>('addresses');
+    if (addressBox.isNotEmpty) {
+      setState(() {
+        _selectedAddress = addressBox.getAt(0); // Load the first address as default
+      });
+    }
   }
 
   @override
@@ -185,6 +200,7 @@ class _MenuScreenState extends State<MenuScreen> {
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: Colors.black, width: 2),
                 ),
+
                 child: Row(
                   children: [
                     Icon(Icons.location_on, color: Colors.black),
@@ -194,28 +210,51 @@ class _MenuScreenState extends State<MenuScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Nama Penerima',
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                            _selectedAddress?.recipientName ??
+                                'Nama Penerima', // Use selected address or default
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ), // Added fontSize
                           ),
-                          Text('Jl. surakarta no.xx'),
+                          Text(
+                            _selectedAddress?.fullAddress ?? 'Alamat penerima',
+                          ), // Use selected address or default
                         ],
                       ),
                     ),
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.black),
-                      ),
-                      child: Text(
-                        'Ganti Alamat',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontWeight: FontWeight.w500,
+                    GestureDetector(
+                      onTap: () async {
+                        // Make the onTap async
+                        final selectedAddress = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AddressListScreen(),
+                          ),
+                        );
+                        if (selectedAddress != null &&
+                            selectedAddress is Address) {
+                          setState(() {
+                            _selectedAddress = selectedAddress;
+                          });
+                        }
+                      },
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: Colors.black),
+                        ),
+                        child: Text(
+                          'Ganti Alamat',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
                     ),

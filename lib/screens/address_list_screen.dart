@@ -1,0 +1,134 @@
+import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import '../models/address.dart';
+
+class AddressListScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Daftar Alamat'),
+        backgroundColor: Colors.red,
+      ),
+      body: ValueListenableBuilder(
+        valueListenable: Hive.box<Address>('addresses').listenable(),
+        builder: (context, Box<Address> box, _) {
+          if (box.isEmpty) {
+            return Center(
+              child: Text('Belum ada alamat tersimpan'),
+            );
+          }
+          return ListView.builder(
+            itemCount: box.length,
+            itemBuilder: (context, index) {
+              final address = box.getAt(index);
+              return Card(
+                margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: ListTile(
+                  onTap: () {
+                    Navigator.pop(context, address); // Pass the selected address back
+                  },
+                  title: Text(address!.label),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(address.recipientName),
+                      Text(address.fullAddress),
+                      Text(address.phoneNumber),
+                    ],
+                  ),
+                  trailing: IconButton(
+                    icon: Icon(Icons.delete),
+                    onPressed: () {
+                      box.deleteAt(index);
+                    },
+                  ),
+                ),
+              );
+            },
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showAddAddressDialog(context),
+        child: Icon(Icons.add),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+
+  void _showAddAddressDialog(BuildContext context) {
+    final labelController = TextEditingController();
+    final nameController = TextEditingController();
+    final addressController = TextEditingController();
+    final phoneController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Tambah Alamat Baru'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: labelController,
+                  decoration: InputDecoration(
+                    labelText: 'Label Alamat',
+                    hintText: 'Rumah, Kantor, dll',
+                  ),
+                ),
+                TextField(
+                  controller: nameController,
+                  decoration: InputDecoration(
+                    labelText: 'Nama Penerima',
+                  ),
+                ),
+                TextField(
+                  controller: addressController,
+                  decoration: InputDecoration(
+                    labelText: 'Alamat Lengkap',
+                  ),
+                  maxLines: 2,
+                ),
+                TextField(
+                  controller: phoneController,
+                  decoration: InputDecoration(
+                    labelText: 'Nomor Telepon',
+                  ),
+                  keyboardType: TextInputType.phone,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Batal'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final newAddress = Address(
+                  label: labelController.text,
+                  recipientName: nameController.text,
+                  fullAddress: addressController.text,
+                  phoneNumber: phoneController.text,
+                );
+                
+                final box = Hive.box<Address>('addresses');
+                box.add(newAddress);
+                
+                Navigator.pop(context);
+              },
+              child: Text('Simpan'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}

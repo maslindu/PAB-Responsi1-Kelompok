@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'screens/menu_screen.dart';
+import 'models/address.dart';
 
-void main() {
+void main() async {
+  await Hive.initFlutter();
+  Hive.registerAdapter(AddressAdapter());
+  await Hive.openBox<Address>('addresses');
+  
   runApp(const MyApp());
 }
 
