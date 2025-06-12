@@ -58,77 +58,128 @@ class AddressListScreen extends StatelessWidget {
   }
 
   void _showAddAddressDialog(BuildContext context) {
-    final labelController = TextEditingController();
-    final nameController = TextEditingController();
-    final addressController = TextEditingController();
-    final phoneController = TextEditingController();
-
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: Text('Tambah Alamat Baru'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: labelController,
-                  decoration: InputDecoration(
-                    labelText: 'Label Alamat',
-                    hintText: 'Rumah, Kantor, dll',
-                  ),
-                ),
-                TextField(
-                  controller: nameController,
-                  decoration: InputDecoration(
-                    labelText: 'Nama Penerima',
-                  ),
-                ),
-                TextField(
-                  controller: addressController,
-                  decoration: InputDecoration(
-                    labelText: 'Alamat Lengkap',
-                  ),
-                  maxLines: 2,
-                ),
-                TextField(
-                  controller: phoneController,
-                  decoration: InputDecoration(
-                    labelText: 'Nomor Telepon',
-                  ),
-                  keyboardType: TextInputType.phone,
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('Batal'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                final newAddress = Address(
-                  label: labelController.text,
-                  recipientName: nameController.text,
-                  fullAddress: addressController.text,
-                  phoneNumber: phoneController.text,
-                );
-                
-                final box = Hive.box<Address>('addresses');
-                box.add(newAddress);
-                
-                Navigator.pop(context);
-              },
-              child: Text('Simpan'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-              ),
-            ),
-          ],
-        );
+        return _AddAddressFormDialog();
       },
+    );
+  }
+}
+
+class _AddAddressFormDialog extends StatefulWidget {
+  @override
+  _AddAddressFormDialogState createState() => _AddAddressFormDialogState();
+}
+
+class _AddAddressFormDialogState extends State<_AddAddressFormDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final labelController = TextEditingController();
+  final nameController = TextEditingController();
+  final addressController = TextEditingController();
+  final phoneController = TextEditingController();
+
+  @override
+  void dispose() {
+    labelController.dispose();
+    nameController.dispose();
+    addressController.dispose();
+    phoneController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('Tambah Alamat Baru'),
+      content: SingleChildScrollView(
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: labelController,
+                decoration: InputDecoration(
+                  labelText: 'Label Alamat',
+                  hintText: 'Rumah, Kantor, dll',
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Label Alamat tidak boleh kosong';
+                  }
+                  return null;
+                },
+              ),
+              TextFormField(
+                controller: nameController,
+                decoration: InputDecoration(
+                  labelText: 'Nama Penerima',
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Nama Penerima tidak boleh kosong';
+                  }
+                  return null;
+                },
+              ),
+              TextFormField(
+                controller: addressController,
+                decoration: InputDecoration(
+                  labelText: 'Alamat Lengkap',
+                ),
+                maxLines: 2,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Alamat Lengkap tidak boleh kosong';
+                  }
+                  return null;
+                },
+              ),
+              TextFormField(
+                controller: phoneController,
+                decoration: InputDecoration(
+                  labelText: 'Nomor Telepon',
+                ),
+                keyboardType: TextInputType.phone,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Nomor Telepon tidak boleh kosong';
+                  }
+                  return null;
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text('Batal'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            if (_formKey.currentState!.validate()) {
+              final newAddress = Address(
+                label: labelController.text,
+                recipientName: nameController.text,
+                fullAddress: addressController.text,
+                phoneNumber: phoneController.text,
+              );
+              
+              final box = Hive.box<Address>('addresses');
+              box.add(newAddress);
+              
+              Navigator.pop(context);
+            }
+          },
+          child: Text('Simpan'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.red,
+          ),
+        ),
+      ],
     );
   }
 }
