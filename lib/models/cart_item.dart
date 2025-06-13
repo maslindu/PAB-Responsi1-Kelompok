@@ -1,7 +1,13 @@
+import 'package:hive/hive.dart';
 import 'menu_item.dart';
 
-class CartItem {
+part 'cart_item.g.dart';
+
+@HiveType(typeId: 3) // Use a unique typeId
+class CartItem extends HiveObject {
+  @HiveField(0)
   final MenuItem menuItem;
+  @HiveField(1)
   int quantity;
 
   CartItem({

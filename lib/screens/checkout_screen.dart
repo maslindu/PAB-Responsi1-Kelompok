@@ -16,6 +16,7 @@ class CheckoutScreen extends StatefulWidget {
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
   final TextEditingController _promoController = TextEditingController();
+  final TextEditingController _notesController = TextEditingController(); // Controller for notes
   int _selectedIndex = 1; // Cart tab selected
   late Box<Address> _addressBox;
   late Box<int> _selectedAddressIndexBox;
@@ -25,6 +26,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     super.initState();
     _addressBox = Hive.box<Address>('addresses');
     _selectedAddressIndexBox = Hive.box<int>('selectedAddressIndexBox');
+    _notesController.text = widget.viewModel.notes; // Load existing notes
+    _notesController.addListener(() {
+      widget.viewModel.setNotes(_notesController.text); // Update notes in ViewModel
+    });
+  }
+
+  @override
+  void dispose() {
+    _promoController.dispose();
+    _notesController.dispose(); // Dispose notes controller
+    super.dispose();
   }
 
   void _showSlidingSidebar() {
@@ -37,6 +49,40 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         return Material(
           type: MaterialType.transparency,
           child: const SlidingSidebar(),
+        );
+      },
+    );
+  }
+
+  void _showNotesDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Tambahkan Catatan'),
+          content: TextField(
+            controller: _notesController,
+            maxLines: 5,
+            decoration: const InputDecoration(
+              hintText: 'Masukkan catatan Anda di sini...',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Tutup'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                widget.viewModel.setNotes(_notesController.text);
+                Navigator.pop(context);
+              },
+              child: const Text('Simpan'),
+            ),
+          ],
         );
       },
     );
@@ -389,7 +435,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
                           Divider(),
 
-                          // Total and Notes
+                          // Notes Section (Button)
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -405,22 +451,25 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                   );
                                 },
                               ),
-                              Container(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  border: Border.all(color: Colors.grey[300]!),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.note_add, size: 16),
-                                    SizedBox(width: 4),
-                                    Text('Catatan'),
-                                  ],
+                              GestureDetector(
+                                onTap: _showNotesDialog,
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 8,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    border: Border.all(color: Colors.grey[300]!),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.note_add, size: 16),
+                                      SizedBox(width: 4),
+                                      Text('Catatan'),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ],
@@ -592,43 +641,57 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               child: SizedBox(
                 width: double.infinity,
                 height: 50,
-                child: ElevatedButton(
-                  onPressed: widget.viewModel.cartItems.isNotEmpty
-                      ? () {
-                          showDialog(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              title: Text('Konfirmasi Pesanan'),
-                              content: Text('Pesanan Anda telah dikonfirmasi!'),
-                              actions: [
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.pop(context);
-                                    widget.viewModel.clearCart();
-                                    Navigator.pop(context);
-                                  },
-                                  child: Text('OK'),
+                child: ValueListenableBuilder<Box<int>>(
+                  valueListenable: _selectedAddressIndexBox.listenable(),
+                  builder: (context, box, _) {
+                    final selectedIndex = box.get('selected');
+                    final selectedAddress = selectedIndex != null && _addressBox.isNotEmpty
+                        ? _addressBox.getAt(selectedIndex)
+                        : null;
+
+                    final bool isAddressValid = selectedAddress != null &&
+                        (selectedAddress.recipientName?.isNotEmpty ?? false) &&
+                        (selectedAddress.fullAddress?.isNotEmpty ?? false);
+
+                    return ElevatedButton(
+                      onPressed: widget.viewModel.cartItems.isNotEmpty && isAddressValid
+                          ? () {
+                              showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: Text('Konfirmasi Pesanan'),
+                                  content: Text('Pesanan Anda telah dikonfirmasi!'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.pop(context);
+                                        widget.viewModel.clearCart();
+                                        Navigator.pop(context);
+                                      },
+                                      child: Text('OK'),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                          );
-                        }
-                      : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFFE53E3E),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                    disabledBackgroundColor: Colors.grey[300],
-                  ),
-                  child: Text(
-                    'Konfirmasi Pesanan',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
+                              );
+                            }
+                          : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xFFE53E3E),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(25),
+                        ),
+                        disabledBackgroundColor: Colors.grey[300],
+                      ),
+                      child: Text(
+                        'Konfirmasi Pesanan',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
             ),

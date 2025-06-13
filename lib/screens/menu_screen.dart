@@ -9,6 +9,7 @@ import 'sliding_sidebar.dart';
 import 'address_list_screen.dart';
 import 'edit_profile_screen.dart'; // Import the edit profile screen
 import '../models/user.dart'; // Import User model
+import 'dart:io'; // Import dart:io for File
 
 class MenuScreen extends StatefulWidget {
   @override
@@ -144,7 +145,13 @@ class _MenuScreenState extends State<MenuScreen> {
                               },
                               child: CircleAvatar(
                                 backgroundColor: Colors.white.withOpacity(0.3),
-                                backgroundImage: AssetImage(currentUser?.profilePicturePath ?? 'assets/images/default_profile.png'),
+                                backgroundImage: (currentUser?.profilePicturePath != null &&
+                                        currentUser!.profilePicturePath.startsWith('assets/'))
+                                    ? AssetImage(currentUser!.profilePicturePath)
+                                    : (currentUser?.profilePicturePath != null &&
+                                            currentUser!.profilePicturePath.isNotEmpty)
+                                        ? FileImage(File(currentUser!.profilePicturePath)) as ImageProvider<Object>
+                                        : AssetImage('assets/images/default_profile.png'),
                               ),
                             ),
                             Stack(

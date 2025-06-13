@@ -1,8 +1,39 @@
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import '../models/menu_item.dart';
 import '../models/cart_item.dart';
+import '../models/address.dart'; // Import Address model
+import '../models/user.dart'; // Import User model
 
 class MenuViewModel extends ChangeNotifier {
+  late Box<CartItem> _cartBox;
+  late Box<Address> _addressBox;
+  late Box<int> _selectedAddressIndexBox;
+
+  MenuViewModel() {
+    _cartBox = Hive.box<CartItem>('cartBox');
+    _addressBox = Hive.box<Address>('addresses');
+    _selectedAddressIndexBox = Hive.box<int>('selectedAddressIndexBox');
+    _cartItems = _cartBox.values.toList();
+
+    // Initialize default user if userBox is empty
+    final userBox = Hive.box<User>('userBox');
+    if (userBox.isEmpty) {
+      final defaultUser = User(
+        fullName: 'Nama User',
+        username: 'user_name',
+        email: 'email@example.com',
+        phoneNumber: '081234567890',
+      );
+      userBox.add(defaultUser);
+    }
+
+    // Listen for changes in the selected address index
+    _selectedAddressIndexBox.listenable().addListener(() {
+      notifyListeners(); // Notify listeners when selected address changes
+    });
+  }
+
   List<MenuItem> _menuItems = [
     MenuItem(
       id: '1',
@@ -105,9 +136,10 @@ class MenuViewModel extends ChangeNotifier {
     ),
   ];
 
-  List<CartItem> _cartItems = [];
+  List<CartItem> _cartItems = []; // This will be initialized from Hive
   String _selectedCategory = 'Semua';
   String _searchQuery = '';
+  String _notes = ''; // New field for notes
 
   // Getters
   List<MenuItem> get menuItems {
@@ -132,13 +164,18 @@ class MenuViewModel extends ChangeNotifier {
   }
 
   List<MenuItem> get recommendedItems => _menuItems.take(4).toList();
-  List<CartItem> get cartItems => _cartItems;
+  List<CartItem> get cartItems => List.unmodifiable(_cartItems); // Return unmodifiable list
   String get selectedCategory => _selectedCategory;
   String get searchQuery => _searchQuery;
+  String get notes => _notes; // Getter for notes
 
   double get subtotal =>
       _cartItems.fold(0, (sum, item) => sum + item.totalPrice);
-  double get shippingCost => 10000;
+  
+  double get shippingCost {
+    return _calculateShippingCost();
+  }
+
   double get adminFee => 1000;
   double get total => subtotal + shippingCost + adminFee;
 
@@ -164,6 +201,11 @@ class MenuViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setNotes(String notes) {
+    _notes = notes;
+    notifyListeners();
+  }
+
   void addToCart(MenuItem menuItem, int quantity) {
     final existingIndex = _cartItems.indexWhere(
       (item) => item.menuItem.id == menuItem.id,
@@ -171,8 +213,11 @@ class MenuViewModel extends ChangeNotifier {
 
     if (existingIndex >= 0) {
       _cartItems[existingIndex].quantity += quantity;
+      _cartBox.putAt(existingIndex, _cartItems[existingIndex]); // Update in Hive
     } else {
-      _cartItems.add(CartItem(menuItem: menuItem, quantity: quantity));
+      final newCartItem = CartItem(menuItem: menuItem, quantity: quantity);
+      _cartItems.add(newCartItem);
+      _cartBox.add(newCartItem); // Add to Hive
     }
     notifyListeners();
   }
@@ -182,20 +227,42 @@ class MenuViewModel extends ChangeNotifier {
     if (index >= 0) {
       if (newQuantity <= 0) {
         _cartItems.removeAt(index);
+        _cartBox.deleteAt(index); // Delete from Hive
       } else {
         _cartItems[index].quantity = newQuantity;
+        _cartBox.putAt(index, _cartItems[index]); // Update in Hive
       }
       notifyListeners();
     }
   }
 
   void removeFromCart(String itemId) {
-    _cartItems.removeWhere((item) => item.menuItem.id == itemId);
-    notifyListeners();
+    final index = _cartItems.indexWhere((item) => item.menuItem.id == itemId);
+    if (index >= 0) {
+      _cartItems.removeAt(index);
+      _cartBox.deleteAt(index); // Delete from Hive
+      notifyListeners();
+    }
   }
 
   void clearCart() {
     _cartItems.clear();
+    _cartBox.clear(); // Clear Hive box
     notifyListeners();
+  }
+
+  double _calculateShippingCost() {
+    final selectedIndex = _selectedAddressIndexBox.get('selected');
+    if (selectedIndex != null && _addressBox.isNotEmpty) {
+      final selectedAddress = _addressBox.getAt(selectedIndex);
+      if (selectedAddress != null && selectedAddress.fullAddress.isNotEmpty) {
+        final firstChar = selectedAddress.fullAddress.toUpperCase().codeUnitAt(0);
+        if (firstChar >= 'A'.codeUnitAt(0) && firstChar <= 'Z'.codeUnitAt(0)) {
+          // 'A' = 10000, 'B' = 11000, 'C' = 12000, etc.
+          return 10000 + (firstChar - 'A'.codeUnitAt(0)) * 1000;
+        }
+      }
+    }
+    return 0.0; // Default shipping cost if no address or invalid address
   }
 }

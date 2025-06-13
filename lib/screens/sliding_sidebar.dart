@@ -5,6 +5,7 @@ import 'favorite_menu_screen.dart'; // Import the new screen
 import 'edit_profile_screen.dart'; // Import the edit profile screen
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/user.dart';
+import 'dart:io'; // Import dart:io for File
 
 class SlidingSidebar extends StatefulWidget {
   const SlidingSidebar({Key? key}) : super(key: key);
@@ -132,7 +133,13 @@ Widget build(BuildContext context) {
                                       // Profile Avatar
                                       CircleAvatar(
                                         radius: 30,
-                                        backgroundImage: AssetImage(currentUser?.profilePicturePath ?? 'assets/images/default_profile.png'),
+                                        backgroundImage: (currentUser?.profilePicturePath != null &&
+                                                currentUser!.profilePicturePath.startsWith('assets/'))
+                                            ? AssetImage(currentUser!.profilePicturePath)
+                                            : (currentUser?.profilePicturePath != null &&
+                                                    currentUser!.profilePicturePath.isNotEmpty)
+                                                ? FileImage(File(currentUser!.profilePicturePath)) as ImageProvider<Object>
+                                                : AssetImage('assets/images/default_profile.png'),
                                       ),
                                       const SizedBox(width: 15),
                                       // User Info
