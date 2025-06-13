@@ -17,22 +17,14 @@ class CheckoutScreen extends StatefulWidget {
 class _CheckoutScreenState extends State<CheckoutScreen> {
   final TextEditingController _promoController = TextEditingController();
   int _selectedIndex = 1; // Cart tab selected
-  Address? _selectedAddress; // Add state variable for selected address
+  late Box<Address> _addressBox;
+  late Box<int> _selectedAddressIndexBox;
 
   @override
   void initState() {
     super.initState();
-    _loadDefaultAddress(); // Load a default address or the last selected one
-  }
-
-  // Add a method to load a default address (optional, but good practice)
-  void _loadDefaultAddress() async {
-    final addressBox = Hive.box<Address>('addresses');
-    if (addressBox.isNotEmpty) {
-      setState(() {
-        _selectedAddress = addressBox.getAt(0); // Load the first address as default
-      });
-    }
+    _addressBox = Hive.box<Address>('addresses');
+    _selectedAddressIndexBox = Hive.box<int>('selectedAddressIndexBox');
   }
 
   void _showSlidingSidebar() {
@@ -75,65 +67,71 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 child: Column(
                   children: [
                     // Address Section - Moved inside SingleChildScrollView
-                    Container(
-                      margin: EdgeInsets.symmetric(horizontal: 16),
-                      padding: EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Color.fromRGBO(254, 216, 102, 1),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.black, width: 2),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.location_on, color: Colors.black),
-                          SizedBox(width: 8),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  _selectedAddress?.recipientName ?? 'Nama Penerima', // Use selected address or default
-                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16), // Added fontSize
-                                ),
-                                Text(_selectedAddress?.fullAddress ?? 'Alamat penerima'), // Use selected address or default
-                              ],
-                            ),
+                    ValueListenableBuilder<Box<int>>(
+                      valueListenable: _selectedAddressIndexBox.listenable(),
+                      builder: (context, box, _) {
+                        final selectedIndex = box.get('selected');
+                        final selectedAddress = selectedIndex != null && _addressBox.isNotEmpty
+                            ? _addressBox.getAt(selectedIndex)
+                            : null;
+
+                        return Container(
+                          margin: EdgeInsets.symmetric(horizontal: 16),
+                          padding: EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Color.fromRGBO(254, 216, 102, 1),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: Colors.black, width: 2),
                           ),
-                          GestureDetector(
-                            onTap: () async { // Make the onTap async
-                              final selectedAddress = await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => AddressListScreen(),
-                                ),
-                              );
-                              if (selectedAddress != null && selectedAddress is Address) {
-                                setState(() {
-                                  _selectedAddress = selectedAddress;
-                                });
-                              }
-                            },
-                            child: Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 8,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: Colors.black),
-                              ),
-                              child: Text(
-                                'Ganti Alamat',
-                                style: TextStyle(
-                                  color: Colors.black,
-                                  fontWeight: FontWeight.w500,
+                          child: Row(
+                            children: [
+                              Icon(Icons.location_on, color: Colors.black),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      selectedAddress?.recipientName ?? 'Nama Penerima', // Use selected address or default
+                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16), // Added fontSize
+                                    ),
+                                    Text(selectedAddress?.fullAddress ?? 'Alamat penerima'), // Use selected address or default
+                                  ],
                                 ),
                               ),
-                            ),
+                              GestureDetector(
+                                onTap: () async { // Make the onTap async
+                                  await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => AddressListScreen(),
+                                    ),
+                                  );
+                                  // No need to setState here, ValueListenableBuilder handles it
+                                },
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 8,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(color: Colors.black),
+                                  ),
+                                  child: Text(
+                                    'Ganti Alamat',
+                                    style: TextStyle(
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
+                        );
+                      },
                     ),
 
                     SizedBox(height: 16),

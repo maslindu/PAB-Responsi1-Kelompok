@@ -7,6 +7,8 @@ import '../models/address.dart';
 import 'checkout_screen.dart';
 import 'sliding_sidebar.dart';
 import 'address_list_screen.dart';
+import 'edit_profile_screen.dart'; // Import the edit profile screen
+import '../models/user.dart'; // Import User model
 
 class MenuScreen extends StatefulWidget {
   @override
@@ -17,7 +19,9 @@ class _MenuScreenState extends State<MenuScreen> {
   final MenuViewModel _viewModel = MenuViewModel();
   final TextEditingController _searchController = TextEditingController();
   int _selectedIndex = 0;
-  Address? _selectedAddress; // Add state variable for selected address
+  late Box<User> _userBox;
+  late Box<Address> _addressBox;
+  late Box<int> _selectedAddressIndexBox;
 
   @override
   void initState() {
@@ -25,17 +29,9 @@ class _MenuScreenState extends State<MenuScreen> {
     _searchController.addListener(() {
       _viewModel.setSearchQuery(_searchController.text);
     });
-    _loadDefaultAddress(); // Load a default address or the last selected one
-  }
-
-  // Add a method to load a default address (optional, but good practice)
-  void _loadDefaultAddress() async {
-    final addressBox = Hive.box<Address>('addresses');
-    if (addressBox.isNotEmpty) {
-      setState(() {
-        _selectedAddress = addressBox.getAt(0); // Load the first address as default
-      });
-    }
+    _userBox = Hive.box<User>('userBox');
+    _addressBox = Hive.box<Address>('addresses');
+    _selectedAddressIndexBox = Hive.box<int>('selectedAddressIndexBox');
   }
 
   @override
@@ -79,6 +75,20 @@ class _MenuScreenState extends State<MenuScreen> {
     );
   }
 
+  String _getGreeting(User? user) {
+    final hour = DateTime.now().hour;
+    String greeting;
+    if (hour < 12) {
+      greeting = 'Good Morning';
+    } else if (hour < 17) {
+      greeting = 'Good Afternoon';
+    } else {
+      greeting = 'Good Evening';
+    }
+    // Use actual username if available
+    return '$greeting, ${user?.username ?? 'User'}!';
+  }
+
   void _showSlidingSidebar() {
     showGeneralDialog(
       context: context,
@@ -101,302 +111,322 @@ class _MenuScreenState extends State<MenuScreen> {
       body: SafeArea(
         child: SingleChildScrollView(
           // Add this wrapper
-          child: Column(
-            children: [
-              // Header Section
-              Container(
-                margin: EdgeInsets.all(16),
-                padding: EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Color.fromRGBO(254, 74, 73, 1),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.black, width: 2),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          child: ValueListenableBuilder<Box<User>>(
+            valueListenable: _userBox.listenable(),
+            builder: (context, box, _) {
+              final currentUser = box.isNotEmpty ? box.getAt(0) : null;
+              return Column(
+                children: [
+                  // Header Section
+                  Container(
+                    margin: EdgeInsets.all(16),
+                    padding: EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Color.fromRGBO(254, 74, 73, 1),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.black, width: 2),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        CircleAvatar(
-                          backgroundColor: Colors.white.withOpacity(0.3),
-                          child: Icon(Icons.person, color: Colors.white),
-                        ),
-                        Stack(
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Icon(
-                              Icons.notifications,
-                              color: Colors.white,
-                              size: 28,
-                            ),
-                            if (_viewModel.cartItemCount > 0)
-                              Positioned(
-                                right: 0,
-                                top: 0,
-                                child: Container(
-                                  padding: EdgeInsets.all(2),
-                                  decoration: BoxDecoration(
-                                    color: Colors.yellow,
-                                    borderRadius: BorderRadius.circular(10),
+                            GestureDetector(
+                              onTap: () async {
+                                await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const EditProfileScreen(),
                                   ),
-                                  constraints: BoxConstraints(
-                                    minWidth: 16,
-                                    minHeight: 16,
-                                  ),
-                                  child: Text(
-                                    '${_viewModel.cartItemCount}',
-                                    style: TextStyle(
-                                      color: Colors.black,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
+                                );
+                                // No need to setState here, ValueListenableBuilder handles it
+                              },
+                              child: CircleAvatar(
+                                backgroundColor: Colors.white.withOpacity(0.3),
+                                backgroundImage: AssetImage(currentUser?.profilePicturePath ?? 'assets/images/default_profile.png'),
                               ),
+                            ),
+                            Stack(
+                              children: [
+                                Icon(
+                                  Icons.notifications,
+                                  color: Colors.white,
+                                  size: 28,
+                                ),
+                                if (_viewModel.cartItemCount > 0)
+                                  Positioned(
+                                    right: 0,
+                                    top: 0,
+                                    child: Container(
+                                      padding: EdgeInsets.all(2),
+                                      decoration: BoxDecoration(
+                                        color: Colors.yellow,
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      constraints: BoxConstraints(
+                                        minWidth: 16,
+                                        minHeight: 16,
+                                      ),
+                                      child: Text(
+                                        '${_viewModel.cartItemCount}',
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
                           ],
+                        ),
+                        SizedBox(height: 16),
+                        Text(
+                          _getGreeting(currentUser),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 16),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.black, width: 1),
+                          ),
+                          child: TextField(
+                            controller: _searchController,
+                            decoration: InputDecoration(
+                              hintText: 'Search Menu',
+                              prefixIcon: Icon(Icons.search, color: Colors.grey),
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                            ),
+                          ),
                         ),
                       ],
                     ),
-                    SizedBox(height: 16),
-                    Text(
-                      'Good Afternoon, User!',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: 16),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.black, width: 1),
-                      ),
-                      child: TextField(
-                        controller: _searchController,
-                        decoration: InputDecoration(
-                          hintText: 'Search Menu',
-                          prefixIcon: Icon(Icons.search, color: Colors.grey),
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+                  ),
 
               // Address Section
-              Container(
-                margin: EdgeInsets.symmetric(horizontal: 16),
-                padding: EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Color.fromRGBO(254, 216, 102, 1),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.black, width: 2),
-                ),
+              ValueListenableBuilder<Box<int>>(
+                valueListenable: _selectedAddressIndexBox.listenable(),
+                builder: (context, box, _) {
+                  final selectedIndex = box.get('selected');
+                  final selectedAddress = selectedIndex != null && _addressBox.isNotEmpty
+                      ? _addressBox.getAt(selectedIndex)
+                      : null;
 
-                child: Row(
-                  children: [
-                    Icon(Icons.location_on, color: Colors.black),
-                    SizedBox(width: 8),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _selectedAddress?.recipientName ??
-                                'Nama Penerima', // Use selected address or default
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ), // Added fontSize
-                          ),
-                          Text(
-                            _selectedAddress?.fullAddress ?? 'Alamat penerima',
-                          ), // Use selected address or default
-                        ],
-                      ),
+                  return Container(
+                    margin: EdgeInsets.symmetric(horizontal: 16),
+                    padding: EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Color.fromRGBO(254, 216, 102, 1),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.black, width: 2),
                     ),
-                    GestureDetector(
-                      onTap: () async {
-                        // Make the onTap async
-                        final selectedAddress = await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => AddressListScreen(),
-                          ),
-                        );
-                        if (selectedAddress != null &&
-                            selectedAddress is Address) {
-                          setState(() {
-                            _selectedAddress = selectedAddress;
-                          });
-                        }
-                      },
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: Colors.black),
-                        ),
-                        child: Text(
-                          'Ganti Alamat',
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.w500,
+                    child: Row(
+                      children: [
+                        Icon(Icons.location_on, color: Colors.black),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                selectedAddress?.recipientName ??
+                                    'Nama Penerima', // Use selected address or default
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ), // Added fontSize
+                              ),
+                              Text(
+                                selectedAddress?.fullAddress ?? 'Alamat penerima',
+                              ), // Use selected address or default
+                            ],
                           ),
                         ),
-                      ),
+                        GestureDetector(
+                          onTap: () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => AddressListScreen(),
+                              ),
+                            );
+                            // No need to setState here, ValueListenableBuilder handles it
+                          },
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: Colors.black),
+                            ),
+                            child: Text(
+                              'Ganti Alamat',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-
-              SizedBox(height: 20),
-
-              // Recommendation Menu Title
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Recommendation Menu',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-
-              SizedBox(height: 16),
-
-              // Horizontal Recommendation Menu
-              Container(
-                height: 200,
-                child: AnimatedBuilder(
-                  animation: _viewModel,
-                  builder: (context, child) {
-                    return ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      padding: EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: _viewModel.recommendedItems.length,
-                      itemBuilder: (context, index) {
-                        final item = _viewModel.recommendedItems[index];
-                        return Container(
-                          width: 160,
-                          margin: EdgeInsets.only(right: 12),
-                          child: MenuCard(
-                            menuItem: item,
-                            onTap: () => _showMenuDetail(item),
-                          ),
-                        );
-                      },
-                    );
-                  },
-                ),
-              ),
-
-              SizedBox(height: 20),
-
-              // Category Filter
-              Container(
-                height: 50,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding: EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: _viewModel.categories.length,
-                  itemBuilder: (context, index) {
-                    final category = _viewModel.categories[index];
-                    final isSelected = _viewModel.selectedCategory == category;
-
-                    Color borderColor;
-                    Color backgroundColor;
-
-                    switch (index % 3) {
-                      case 0:
-                        borderColor = Colors.red;
-                        backgroundColor = isSelected
-                            ? Colors.red[100]!
-                            : Colors.white;
-                        break;
-                      case 1:
-                        borderColor = Colors.blue;
-                        backgroundColor = isSelected
-                            ? Colors.blue[100]!
-                            : Colors.white;
-                        break;
-                      case 2:
-                        borderColor = Colors.orange;
-                        backgroundColor = isSelected
-                            ? Colors.orange[100]!
-                            : Colors.white;
-                        break;
-                      case 3:
-                        borderColor = Colors.blue;
-                        backgroundColor = isSelected
-                            ? Colors.blue[100]!
-                            : Colors.white;
-                        break;
-                      default:
-                        borderColor = Colors.grey;
-                        backgroundColor = Colors.white;
-                    }
-
-                    return Container(
-                      margin: EdgeInsets.only(right: 12),
-                      child: FilterChip(
-                        label: Text(category),
-                        selected: isSelected,
-                        onSelected: (selected) {
-                          setState(() {
-                            _viewModel.setSelectedCategory(category);
-                          });
-                        },
-                        backgroundColor: backgroundColor,
-                        selectedColor: backgroundColor,
-                        checkmarkColor: borderColor,
-                        side: BorderSide(color: borderColor, width: 2),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-
-              SizedBox(height: 16),
-
-              // Menu Grid
-              GridView.builder(
-                shrinkWrap: true, // Add this
-                physics: NeverScrollableScrollPhysics(), // Add this
-                padding: EdgeInsets.symmetric(horizontal: 16),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: 0.8,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                ),
-                itemCount: _viewModel.menuItems.length,
-                itemBuilder: (context, index) {
-                  final item = _viewModel.menuItems[index];
-                  return MenuCard(
-                    menuItem: item,
-                    onTap: () => _showMenuDetail(item),
                   );
                 },
               ),
-              SizedBox(height: 80), // Add extra space at the bottom to prevent overflow
-            ],
+
+                  SizedBox(height: 20),
+
+                  // Recommendation Menu Title
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Recommendation Menu',
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+
+                  SizedBox(height: 16),
+
+                  // Horizontal Recommendation Menu
+                  Container(
+                    height: 200,
+                    child: AnimatedBuilder(
+                      animation: _viewModel,
+                      builder: (context, child) {
+                        return ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          padding: EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: _viewModel.recommendedItems.length,
+                          itemBuilder: (context, index) {
+                            final item = _viewModel.recommendedItems[index];
+                            return Container(
+                              width: 160,
+                              margin: EdgeInsets.only(right: 12),
+                              child: MenuCard(
+                                menuItem: item,
+                                onTap: () => _showMenuDetail(item),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ),
+
+                  SizedBox(height: 20),
+
+                  // Category Filter
+                  Container(
+                    height: 50,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: _viewModel.categories.length,
+                      itemBuilder: (context, index) {
+                        final category = _viewModel.categories[index];
+                        final isSelected = _viewModel.selectedCategory == category;
+
+                        Color borderColor;
+                        Color backgroundColor;
+
+                        switch (index % 3) {
+                          case 0:
+                            borderColor = Colors.red;
+                            backgroundColor = isSelected
+                                ? Colors.red[100]!
+                                : Colors.white;
+                            break;
+                          case 1:
+                            borderColor = Colors.blue;
+                            backgroundColor = isSelected
+                                ? Colors.blue[100]!
+                                : Colors.white;
+                            break;
+                          case 2:
+                            borderColor = Colors.orange;
+                            backgroundColor = isSelected
+                                ? Colors.orange[100]!
+                                : Colors.white;
+                            break;
+                          case 3:
+                            borderColor = Colors.blue;
+                            backgroundColor = isSelected
+                                ? Colors.blue[100]!
+                                : Colors.white;
+                            break;
+                          default:
+                            borderColor = Colors.grey;
+                            backgroundColor = Colors.white;
+                        }
+
+                        return Container(
+                          margin: EdgeInsets.only(right: 12),
+                          child: FilterChip(
+                            label: Text(category),
+                            selected: isSelected,
+                            onSelected: (selected) {
+                              setState(() {
+                                _viewModel.setSelectedCategory(category);
+                              });
+                            },
+                            backgroundColor: backgroundColor,
+                            selectedColor: backgroundColor,
+                            checkmarkColor: borderColor,
+                            side: BorderSide(color: borderColor, width: 2),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+
+                  SizedBox(height: 16),
+
+                  // Menu Grid
+                  GridView.builder(
+                    shrinkWrap: true, // Add this
+                    physics: NeverScrollableScrollPhysics(), // Add this
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      childAspectRatio: 0.8,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                    ),
+                    itemCount: _viewModel.menuItems.length,
+                    itemBuilder: (context, index) {
+                      final item = _viewModel.menuItems[index];
+                      return MenuCard(
+                        menuItem: item,
+                        onTap: () => _showMenuDetail(item),
+                      );
+                    },
+                  ),
+                  SizedBox(height: 80), // Add extra space at the bottom to prevent overflow
+                ],
+              );
+            },
           ),
         ),
       ),

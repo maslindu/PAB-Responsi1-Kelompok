@@ -26,6 +26,8 @@ class AddressListScreen extends StatelessWidget {
                 margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: ListTile(
                   onTap: () {
+                    final selectedAddressBox = Hive.box<int>('selectedAddressIndexBox');
+                    selectedAddressBox.put('selected', index); // Save the index of the selected address
                     Navigator.pop(context, address); // Pass the selected address back
                   },
                   title: Text(address!.label),

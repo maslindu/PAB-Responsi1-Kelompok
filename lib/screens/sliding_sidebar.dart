@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'address_list_screen.dart';
 import 'favorite_menu_screen.dart'; // Import the new screen
+import 'edit_profile_screen.dart'; // Import the edit profile screen
+import 'package:hive_flutter/hive_flutter.dart';
+import '../models/user.dart';
 
 class SlidingSidebar extends StatefulWidget {
   const SlidingSidebar({Key? key}) : super(key: key);
@@ -14,6 +17,7 @@ class _SlidingSidebarState extends State<SlidingSidebar>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
+  late Box<User> _userBox;
 
   @override
   void initState() {
@@ -24,6 +28,7 @@ class _SlidingSidebarState extends State<SlidingSidebar>
     );
     _animation = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
     _controller.forward();
+    _userBox = Hive.box<User>('userBox');
   }
 
   @override
@@ -94,145 +99,159 @@ Widget build(BuildContext context) {
                   child: SafeArea(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 16.0),
-                      child: Column(
-                        children: [
-                          // User Profile Section
-                          Container(
-                            padding: const EdgeInsets.all(20.0),
-                            decoration: const BoxDecoration(
-                              border: Border(
-                                bottom: BorderSide(
-                                  color: Colors.grey,
-                                  width: 0.5,
-                                ),
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                // Profile Avatar
-                                Container(
-                                  width: 60,
-                                  height: 60,
+                      child: ValueListenableBuilder<Box<User>>(
+                        valueListenable: _userBox.listenable(),
+                        builder: (context, box, _) {
+                          final currentUser = box.isNotEmpty ? box.getAt(0) : null;
+                          return Column(
+                            children: [
+                              // User Profile Section
+                              InkWell(
+                                onTap: () async {
+                                  Navigator.pop(context); // Close sidebar
+                                  await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const EditProfileScreen(),
+                                    ),
+                                  );
+                                  // No need to setState here, ValueListenableBuilder handles it
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.all(20.0),
                                   decoration: const BoxDecoration(
-                                    color: Color(0xFFD3D3D3),
-                                    shape: BoxShape.circle,
+                                    border: Border(
+                                      bottom: BorderSide(
+                                        color: Colors.grey,
+                                        width: 0.5,
+                                      ),
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(width: 15),
-                                // User Info
-                                const Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                  child: Row(
                                     children: [
-                                      Text(
-                                        'Nama User',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.black,
-                                        ),
+                                      // Profile Avatar
+                                      CircleAvatar(
+                                        radius: 30,
+                                        backgroundImage: AssetImage(currentUser?.profilePicturePath ?? 'assets/images/default_profile.png'),
                                       ),
-                                      SizedBox(height: 4),
-                                      Text(
-                                        'email@email.com',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.black87,
-                                        ),
-                                      ),
-                                      SizedBox(height: 2),
-                                      Text(
-                                        '081234567890',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.black87,
+                                      const SizedBox(width: 15),
+                                      // User Info
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              currentUser?.fullName ?? 'Nama User',
+                                              style: const TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w600,
+                                                color: Colors.black,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              currentUser?.email ?? 'email@email.com',
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                color: Colors.black87,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              currentUser?.phoneNumber ?? '081234567890',
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                color: Colors.black87,
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
-                              ],
-                            ),
-                          ),
+                              ),
 
-                          // Menu Items
-                          Expanded(
-                            child: ListView(
-                              padding: EdgeInsets.zero,
-                              children: [
-                                _buildMenuItem(
-                                  icon: Icon(Icons.location_on_outlined),
-                                  title: 'Daftar Alamat',
-                                  onTap: () {
-                                    Navigator.pop(context);
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => AddressListScreen(),
+                              // Menu Items
+                              Expanded(
+                                child: ListView(
+                                  padding: EdgeInsets.zero,
+                                  children: [
+                                    _buildMenuItem(
+                                      icon: Icon(Icons.location_on_outlined),
+                                      title: 'Daftar Alamat',
+                                      onTap: () {
+                                        Navigator.pop(context);
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => AddressListScreen(),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                    _buildMenuItem(
+                                      icon: Image.asset(
+                                        'assets/images/icons/ActivityHistory.png',
+                                        width: 24,
+                                        height: 24,
                                       ),
-                                    );
-                                  },
-                                ),
-                                _buildMenuItem(
-                                  icon: Image.asset(
-                                    'assets/images/icons/ActivityHistory.png',
-                                    width: 24,
-                                    height: 24,
-                                  ),
-                                  title: 'Daftar Transaksi',
-                                  onTap: () {
-                                    Navigator.pop(context);
-                                  },
-                                ),
-                                _buildMenuItem(
-                                  icon: Image.asset(
-                                    'assets/images/icons/Food.png',
-                                    width: 24,
-                                    height: 24,
-                                  ),
-                                  title: 'Menu Favorit',
-                                  onTap: () {
-                                    Navigator.pop(context);
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => const FavoriteMenuScreen(),
+                                      title: 'Daftar Transaksi',
+                                      onTap: () {
+                                        Navigator.pop(context);
+                                      },
+                                    ),
+                                    _buildMenuItem(
+                                      icon: Image.asset(
+                                        'assets/images/icons/Food.png',
+                                        width: 24,
+                                        height: 24,
                                       ),
-                                    );
-                                  },
-                                ),
-                                _buildMenuItem(
-                                  icon: Image.asset(
-                                    'assets/images/icons/LoyaltyCard.png',
-                                    width: 24,
-                                    height: 24,
-                                  ),
-                                  title: 'Promo yang Dimiliki',
-                                  onTap: () {
-                                    Navigator.pop(context);
-                                  },
-                                ),
-                                const SizedBox(height: 16),
-                                Container(
-                                  alignment: Alignment.center,
-                                  child: TextButton(
-                                    onPressed: () {
-                                      Navigator.pop(context);
-                                    },
-                                    child: const Text(
-                                      'LOGOUT',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.red,
+                                      title: 'Menu Favorit',
+                                      onTap: () {
+                                        Navigator.pop(context);
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => const FavoriteMenuScreen(),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                    _buildMenuItem(
+                                      icon: Image.asset(
+                                        'assets/images/icons/LoyaltyCard.png',
+                                        width: 24,
+                                        height: 24,
+                                      ),
+                                      title: 'Promo yang Dimiliki',
+                                      onTap: () {
+                                        Navigator.pop(context);
+                                      },
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Container(
+                                      alignment: Alignment.center,
+                                      child: TextButton(
+                                        onPressed: () {
+                                          Navigator.pop(context);
+                                        },
+                                        child: const Text(
+                                          'LOGOUT',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.red,
+                                          ),
+                                        ),
                                       ),
                                     ),
-                                  ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                          ),
-                        ],
+                              ),
+                            ],
+                          );
+                        },
                       ),
                     ),
                   ),
