@@ -20,6 +20,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   int _selectedIndex = 1; // Cart tab selected
   late Box<Address> _addressBox;
   late Box<int> _selectedAddressIndexBox;
+  String _selectedPaymentMethod = 'Transfer'; // Added state variable for payment method
 
   @override
   void initState() {
@@ -83,6 +84,41 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               child: const Text('Simpan'),
             ),
           ],
+        );
+      },
+    );
+  }
+
+  void _showPaymentMethodDialog() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              ListTile(
+                leading: Icon(Icons.payment), // Icon for Transfer
+                title: const Text('Transfer'),
+                onTap: () {
+                  setState(() {
+                    _selectedPaymentMethod = 'Transfer';
+                  });
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.money), // Icon for Tunai
+                title: const Text('Tunai'),
+                onTap: () {
+                  setState(() {
+                    _selectedPaymentMethod = 'Tunai';
+                  });
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
         );
       },
     );
@@ -503,7 +539,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               ),
                               //payment option button
                               ElevatedButton(
-                                onPressed: () {},
+                                onPressed: _showPaymentMethodDialog, // Call the dialog function
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.red, // Warna latar
                                   foregroundColor: Colors.black, // Warna teks
@@ -517,7 +553,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                   elevation: 0,
                                 ),
                                 child: Text(
-                                  'gopay',
+                                  _selectedPaymentMethod, // Display selected payment method
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.bold,
@@ -638,61 +674,66 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             // Confirm Order Button
             Container(
               padding: EdgeInsets.all(16),
-              child: SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ValueListenableBuilder<Box<int>>(
-                  valueListenable: _selectedAddressIndexBox.listenable(),
-                  builder: (context, box, _) {
-                    final selectedIndex = box.get('selected');
-                    final selectedAddress = selectedIndex != null && _addressBox.isNotEmpty
-                        ? _addressBox.getAt(selectedIndex)
-                        : null;
+              child: AnimatedBuilder(
+                animation: widget.viewModel,
+                builder: (context, child) {
+                  return SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ValueListenableBuilder<Box<int>>(
+                      valueListenable: _selectedAddressIndexBox.listenable(),
+                      builder: (context, box, _) {
+                        final selectedIndex = box.get('selected');
+                        final selectedAddress = selectedIndex != null && _addressBox.isNotEmpty
+                            ? _addressBox.getAt(selectedIndex)
+                            : null;
 
-                    final bool isAddressValid = selectedAddress != null &&
-                        selectedAddress.recipientName.isNotEmpty &&
-                        selectedAddress.fullAddress.isNotEmpty;
+                        final bool isAddressValid = selectedAddress != null &&
+                            selectedAddress.recipientName.isNotEmpty &&
+                            selectedAddress.fullAddress.isNotEmpty;
 
-                    return ElevatedButton(
-                      onPressed: widget.viewModel.cartItems.isNotEmpty && isAddressValid
-                          ? () {
-                              showDialog(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                  title: Text('Konfirmasi Pesanan'),
-                                  content: Text('Pesanan Anda telah dikonfirmasi!'),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () {
-                                        Navigator.pop(context);
-                                        widget.viewModel.clearCart();
-                                        Navigator.pop(context);
-                                      },
-                                      child: Text('OK'),
+                        return ElevatedButton(
+                          onPressed: widget.viewModel.cartItems.isNotEmpty && isAddressValid
+                              ? () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: Text('Konfirmasi Pesanan'),
+                                      content: Text('Pesanan Anda telah dikonfirmasi!'),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.pop(context);
+                                            widget.viewModel.clearCart();
+                                            Navigator.pop(context);
+                                          },
+                                          child: Text('OK'),
+                                        ),
+                                      ],
                                     ),
-                                  ],
-                                ),
-                              );
-                            }
-                          : null,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFFE53E3E),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(25),
-                        ),
-                        disabledBackgroundColor: Colors.grey[300],
-                      ),
-                      child: Text(
-                        'Konfirmasi Pesanan',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    );
-                  },
-                ),
+                                  );
+                                }
+                              : null,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Color(0xFFE53E3E),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(25),
+                            ),
+                            disabledBackgroundColor: Colors.grey[300],
+                          ),
+                          child: Text(
+                            'Konfirmasi Pesanan',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  );
+                },
               ),
             ),
           ],
