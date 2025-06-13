@@ -147,9 +147,9 @@ class _MenuScreenState extends State<MenuScreen> {
                                 backgroundColor: Colors.white.withOpacity(0.3),
                                 backgroundImage: (currentUser?.profilePicturePath != null &&
                                         currentUser!.profilePicturePath.startsWith('assets/'))
-                                    ? AssetImage(currentUser!.profilePicturePath)
+                                    ? AssetImage(currentUser.profilePicturePath)
                                     : (currentUser?.profilePicturePath != null &&
-                                            currentUser!.profilePicturePath.isNotEmpty)
+                                            currentUser?.profilePicturePath.isNotEmpty == true)
                                         ? FileImage(File(currentUser!.profilePicturePath)) as ImageProvider<Object>
                                         : AssetImage('assets/images/default_profile.png'),
                               ),

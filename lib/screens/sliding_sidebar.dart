@@ -135,10 +135,10 @@ Widget build(BuildContext context) {
                                         radius: 30,
                                         backgroundImage: (currentUser?.profilePicturePath != null &&
                                                 currentUser!.profilePicturePath.startsWith('assets/'))
-                                            ? AssetImage(currentUser!.profilePicturePath)
+                                            ? AssetImage(currentUser.profilePicturePath)
                                             : (currentUser?.profilePicturePath != null &&
                                                     currentUser!.profilePicturePath.isNotEmpty)
-                                                ? FileImage(File(currentUser!.profilePicturePath)) as ImageProvider<Object>
+                                                ? FileImage(File(currentUser.profilePicturePath)) as ImageProvider<Object>
                                                 : AssetImage('assets/images/default_profile.png'),
                                       ),
                                       const SizedBox(width: 15),

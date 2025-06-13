@@ -650,8 +650,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         : null;
 
                     final bool isAddressValid = selectedAddress != null &&
-                        (selectedAddress.recipientName?.isNotEmpty ?? false) &&
-                        (selectedAddress.fullAddress?.isNotEmpty ?? false);
+                        selectedAddress.recipientName.isNotEmpty &&
+                        selectedAddress.fullAddress.isNotEmpty;
 
                     return ElevatedButton(
                       onPressed: widget.viewModel.cartItems.isNotEmpty && isAddressValid
