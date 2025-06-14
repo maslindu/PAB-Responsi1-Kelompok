@@ -5,8 +5,9 @@ import '../viewmodels/menu_view_model.dart';
 import 'sliding_sidebar.dart';
 import 'address_list_screen.dart';
 import '../models/payment.dart';
-import '../models/transaction.dart'; // Add this import
+import '../models/transaction.dart';
 import 'payment_screen.dart';
+// import 'payment_status_screen.dart'; // Removed this import
 
 class CheckoutScreen extends StatefulWidget {
   final MenuViewModel viewModel;
@@ -23,6 +24,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   int _selectedIndex = 1;
   late Box<Address> _addressBox;
   late Box<int> _selectedAddressIndexBox;
+  late Box<String> _lastTransactionIdBox; // Add this
   String _selectedPaymentMethod = 'Transfer';
 
   @override
@@ -30,6 +32,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     super.initState();
     _addressBox = Hive.box<Address>('addresses');
     _selectedAddressIndexBox = Hive.box<int>('selectedAddressIndexBox');
+    _lastTransactionIdBox = Hive.box<String>('lastTransactionIdBox'); // Initialize
     _notesController.text = widget.viewModel.notes;
     _notesController.addListener(() {
       widget.viewModel.setNotes(_notesController.text);
@@ -169,6 +172,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     // Save transaction
     final transactionBox = Hive.box<Transaction>('transactionBox');
     await transactionBox.put(transaction.id, transaction);
+    await _lastTransactionIdBox.put('lastTransactionId', transaction.id); // Save last transaction ID
 
     if (_selectedPaymentMethod == 'Transfer') {
       // Create payment record
@@ -199,31 +203,42 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ),
         ),
       ).then((_) {
-        Navigator.pop(context); // Return to menu screen
+        Navigator.pop(context); // Return to menu screen after PaymentScreen is popped
       });
     } else {
-      // For cash payment, start processing immediately
+      // For cash payment, create a payment record with 'paid' status
+      final payment = Payment(
+        id: transactionId,
+        totalAmount: widget.viewModel.total,
+        paymentMethod: _selectedPaymentMethod,
+        createdAt: DateTime.now(),
+        expiresAt: DateTime.now(), // No expiration for cash
+        orderDetails: _buildOrderDetails(),
+        transactionId: transactionId,
+        status: 'paid', // Immediately set to paid for cash
+      );
+
+      final paymentBox = Hive.box<Payment>('paymentBox');
+      await paymentBox.put(payment.id, payment);
+
+      // Start order processing immediately
       _startOrderProcessing(transaction);
       
       // Clear cart
       widget.viewModel.clearCart();
       
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text('Konfirmasi Pesanan'),
-          content: Text('Pesanan Anda telah dikonfirmasi untuk pembayaran tunai! Makanan akan segera disiapkan.'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                Navigator.pop(context);
-              },
-              child: Text('OK'),
-            ),
-          ],
+      // Navigate to PaymentScreen to show details and then pop back
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PaymentScreen(
+            payment: payment,
+            transaction: transaction,
+          ),
         ),
-      );
+      ).then((_) {
+        Navigator.pop(context); // Return to menu screen after PaymentScreen is popped
+      });
     }
   }
 

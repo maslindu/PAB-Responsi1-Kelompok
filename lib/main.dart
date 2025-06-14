@@ -27,7 +27,8 @@ void main() async {
   await Hive.openBox<int>('selectedAddressIndexBox');
   await Hive.openBox<CartItem>('cartBox');
   await Hive.openBox<Payment>('paymentBox');
-  await Hive.openBox<Transaction>('transactionBox'); // Add this line
+  await Hive.openBox<Transaction>('transactionBox');
+  await Hive.openBox<String>('lastTransactionIdBox'); // Open last transaction ID box
   
   runApp(const MyApp());
 }

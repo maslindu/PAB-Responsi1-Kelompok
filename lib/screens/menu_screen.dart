@@ -26,7 +26,8 @@ class _MenuScreenState extends State<MenuScreen> {
   late Box<User> _userBox;
   late Box<Address> _addressBox;
   late Box<int> _selectedAddressIndexBox;
-  late Box<Transaction> _transactionBox; // Declare transaction box
+  late Box<Transaction> _transactionBox;
+  late Box<String> _lastTransactionIdBox; // Declare last transaction ID box
 
   @override
   void initState() {
@@ -37,7 +38,8 @@ class _MenuScreenState extends State<MenuScreen> {
     _userBox = Hive.box<User>('userBox');
     _addressBox = Hive.box<Address>('addresses');
     _selectedAddressIndexBox = Hive.box<int>('selectedAddressIndexBox');
-    _transactionBox = Hive.box<Transaction>('transactionBox'); // Initialize transaction box
+    _transactionBox = Hive.box<Transaction>('transactionBox');
+    _lastTransactionIdBox = Hive.box<String>('lastTransactionIdBox'); // Initialize last transaction ID box
   }
 
   @override
@@ -46,39 +48,38 @@ class _MenuScreenState extends State<MenuScreen> {
     super.dispose();
   }
 
-  Payment? get _activePendingPayment {
-    final paymentBox = Hive.box<Payment>('paymentBox');
-    for (var payment in paymentBox.values) {
-      if (payment.status == 'pending' && !payment.isExpired) {
-        return payment;
-      }
-    }
-    return null;
-  }
+  void _showNotificationScreen() {
+    final lastTransactionId = _lastTransactionIdBox.get('lastTransactionId');
+    if (lastTransactionId != null) {
+      final transaction = _transactionBox.get(lastTransactionId);
+      final paymentBox = Hive.box<Payment>('paymentBox');
+      final payment = paymentBox.get(lastTransactionId); // Assuming payment ID is same as transaction ID
 
-  void _showPaymentDialog() {
-    final pendingPayment = _activePendingPayment;
-    if (pendingPayment != null) {
-      final transaction = _transactionBox.get(pendingPayment.transactionId); // Retrieve transaction
-      if (transaction != null) {
+      if (transaction != null && payment != null && transaction.status != 'completed' && transaction.status != 'cancelled') {
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => PaymentScreen(
-              payment: pendingPayment,
-              transaction: transaction, // Pass transaction
+              payment: payment,
+              transaction: transaction,
             ),
           ),
         );
       } else {
-        // Handle case where transaction is not found (e.g., show an error message)
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: Transaction not found for this payment.'),
-            backgroundColor: Colors.red,
+            content: Text('Tidak ada notifikasi pembayaran aktif.'),
+            backgroundColor: Colors.blue,
           ),
         );
       }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Tidak ada notifikasi pembayaran.'),
+          backgroundColor: Colors.blue,
+        ),
+      );
     }
   }
 
@@ -196,7 +197,7 @@ class _MenuScreenState extends State<MenuScreen> {
                                               null &&
                                           currentUser
                                                   ?.profilePicturePath
-                                                  ?.isNotEmpty ==
+                                                  .isNotEmpty ==
                                               true)
                                     ? FileImage(
                                             File(
@@ -210,7 +211,7 @@ class _MenuScreenState extends State<MenuScreen> {
                               ),
                             ),
                             GestureDetector(
-                              onTap: _showPaymentDialog,
+                              onTap: _showNotificationScreen, // Changed to new method
                               child: Stack(
                                 children: [
                                   Icon(
@@ -219,17 +220,18 @@ class _MenuScreenState extends State<MenuScreen> {
                                     size: 28,
                                   ),
 
-                                  // Payment notification dot
-                                  ValueListenableBuilder<Box<Payment>>(
-                                    valueListenable: Hive.box<Payment>(
-                                      'paymentBox',
-                                    ).listenable(),
+                                  // Payment status notification dot
+                                  ValueListenableBuilder<Box<String>>(
+                                    valueListenable: _lastTransactionIdBox.listenable(),
                                     builder: (context, box, _) {
-                                      final hasPendingPayment =
-                                          _activePendingPayment != null;
+                                      final lastTransactionId = box.get('lastTransactionId');
+                                      final transaction = lastTransactionId != null ? _transactionBox.get(lastTransactionId) : null;
+                                      final bool hasActiveTransaction = transaction != null &&
+                                          (transaction.status == 'pending' ||
+                                              transaction.status == 'preparing' ||
+                                              transaction.status == 'delivering');
 
-                                      if (!hasPendingPayment &&
-                                          _viewModel.cartItemCount == 0) {
+                                      if (!hasActiveTransaction) {
                                         return SizedBox.shrink();
                                       }
 
@@ -239,25 +241,17 @@ class _MenuScreenState extends State<MenuScreen> {
                                         child: Container(
                                           padding: EdgeInsets.all(2),
                                           decoration: BoxDecoration(
-                                            color: hasPendingPayment
-                                                ? Colors.yellow
-                                                : Colors.orange,
-                                            borderRadius: BorderRadius.circular(
-                                              10,
-                                            ),
+                                            color: Colors.yellow, // Indicate active transaction
+                                            borderRadius: BorderRadius.circular(10),
                                           ),
                                           constraints: BoxConstraints(
                                             minWidth: 16,
                                             minHeight: 16,
                                           ),
                                           child: Text(
-                                            hasPendingPayment
-                                                ? '!'
-                                                : '${_viewModel.cartItemCount}',
+                                            '!', // Exclamation mark for notification
                                             style: TextStyle(
-                                              color: hasPendingPayment
-                                                  ? Colors.black
-                                                  : Colors.white,
+                                              color: Colors.black,
                                               fontSize: 10,
                                               fontWeight: FontWeight.bold,
                                             ),
