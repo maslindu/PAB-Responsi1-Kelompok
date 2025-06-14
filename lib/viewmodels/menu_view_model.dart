@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'dart:async';
+import 'dart:math';
 import '../models/menu_item.dart';
 import '../models/cart_item.dart';
 import '../models/address.dart'; // Import Address model
@@ -9,6 +11,8 @@ class MenuViewModel extends ChangeNotifier {
   late Box<CartItem> _cartBox;
   late Box<Address> _addressBox;
   late Box<int> _selectedAddressIndexBox;
+  
+  Timer? _recommendationTimer;
 
   MenuViewModel() {
     _cartBox = Hive.box<CartItem>('cartBox');
@@ -32,6 +36,25 @@ class MenuViewModel extends ChangeNotifier {
     _selectedAddressIndexBox.listenable().addListener(() {
       notifyListeners(); // Notify listeners when selected address changes
     });
+
+    // Start the recommendation rotation timer
+    _startRecommendationTimer();
+  }
+
+  // Start timer to rotate recommendations every 30 seconds
+  void _startRecommendationTimer() {
+    _recommendationTimer = Timer.periodic(Duration(seconds: 30), (timer) {
+      // Only update recommendations if search is not active
+      if (_searchQuery.isEmpty) {
+        notifyListeners(); // This will cause recommendedItems to regenerate
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _recommendationTimer?.cancel();
+    super.dispose();
   }
 
   List<MenuItem> _menuItems = [
@@ -170,7 +193,40 @@ class MenuViewModel extends ChangeNotifier {
     return filteredItems;
   }
 
-  List<MenuItem> get recommendedItems => _menuItems.take(4).toList();
+  // Updated recommendedItems getter with rotation logic
+  List<MenuItem> get recommendedItems {
+    if (_searchQuery.isNotEmpty) {
+      return []; // Return empty list when searching
+    }
+    
+    // Create a copy of menu items for shuffling
+    List<MenuItem> shuffledItems = List.from(_menuItems);
+    
+    // Use current time as seed for consistent rotation during the same time period
+    int seed = (DateTime.now().millisecondsSinceEpoch ~/ 30000); // Changes every 30 seconds
+    Random seededRandom = Random(seed);
+    
+    // Shuffle the list with the seeded random
+    for (int i = shuffledItems.length - 1; i > 0; i--) {
+      int j = seededRandom.nextInt(i + 1);
+      MenuItem temp = shuffledItems[i];
+      shuffledItems[i] = shuffledItems[j];
+      shuffledItems[j] = temp;
+    }
+    
+    return shuffledItems.take(4).toList();
+  }
+
+  // Method to manually refresh recommendations
+  void refreshRecommendations() {
+    if (_searchQuery.isEmpty) {
+      notifyListeners();
+    }
+  }
+
+  // Check if search is active
+  bool get isSearchActive => _searchQuery.isNotEmpty;
+
   List<CartItem> get cartItems => List.unmodifiable(_cartItems); // Return unmodifiable list
   String get selectedCategory => _selectedCategory;
   String get searchQuery => _searchQuery;

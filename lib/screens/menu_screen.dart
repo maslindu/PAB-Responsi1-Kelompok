@@ -47,6 +47,7 @@ class _MenuScreenState extends State<MenuScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _viewModel.dispose(); // Make sure to dispose the view model
     super.dispose();
   }
 
@@ -330,6 +331,20 @@ class _MenuScreenState extends State<MenuScreen> {
                                 Icons.search,
                                 color: Colors.grey,
                               ),
+                              suffixIcon: AnimatedBuilder(
+                                animation: _viewModel,
+                                builder: (context, child) {
+                                  return _viewModel.isSearchActive
+                                      ? IconButton(
+                                          icon: Icon(Icons.clear, color: Colors.grey),
+                                          onPressed: () {
+                                            _searchController.clear();
+                                            _viewModel.setSearchQuery('');
+                                          },
+                                        )
+                                      : SizedBox.shrink();
+                                },
+                              ),
                               border: InputBorder.none,
                               contentPadding: EdgeInsets.symmetric(
                                 horizontal: 16,
@@ -425,50 +440,87 @@ class _MenuScreenState extends State<MenuScreen> {
 
                   SizedBox(height: 20),
 
-                  // Recommendation Menu Title
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        'Recommendation Menu',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  SizedBox(height: 16),
-
-                  // Horizontal Recommendation Menu
-                  Container(
-                    height: 200,
-                    child: AnimatedBuilder(
-                      animation: _viewModel,
-                      builder: (context, child) {
-                        return ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          padding: EdgeInsets.symmetric(horizontal: 16),
-                          itemCount: _viewModel.recommendedItems.length,
-                          itemBuilder: (context, index) {
-                            final item = _viewModel.recommendedItems[index];
-                            return Container(
-                              width: 160,
-                              margin: EdgeInsets.only(right: 12),
-                              child: MenuCard(
-                                menuItem: item,
-                                onTap: () => _showMenuDetail(item),
+                  // Conditional Recommendation Menu Section
+                  AnimatedBuilder(
+                    animation: _viewModel,
+                    builder: (context, child) {
+                      // Only show recommendations when not searching
+                      if (!_viewModel.isSearchActive && _viewModel.recommendedItems.isNotEmpty) {
+                        return Column(
+                          children: [
+                            // Recommendation Menu Title with Refresh Button
+                            Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 16),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Recommendation Menu',
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  IconButton(
+                                    onPressed: () {
+                                      _viewModel.refreshRecommendations();
+                                    },
+                                    icon: Icon(
+                                      Icons.refresh,
+                                      color: Colors.grey[600],
+                                    ),
+                                    tooltip: 'Refresh Recommendations',
+                                  ),
+                                ],
                               ),
-                            );
-                          },
-                        );
-                      },
-                    ),
-                  ),
+                            ),
 
-                  SizedBox(height: 20),
+                            SizedBox(height: 16),
+
+                            // Horizontal Recommendation Menu
+                            Container(
+                              height: 200,
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                padding: EdgeInsets.symmetric(horizontal: 16),
+                                itemCount: _viewModel.recommendedItems.length,
+                                itemBuilder: (context, index) {
+                                  final item = _viewModel.recommendedItems[index];
+                                  return Container(
+                                    width: 160,
+                                    margin: EdgeInsets.only(right: 12),
+                                    child: MenuCard(
+                                      menuItem: item,
+                                      onTap: () => _showMenuDetail(item),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+
+                            SizedBox(height: 20),
+                          ],
+                        );
+                      } else if (_viewModel.isSearchActive) {
+                        // Show search results count when searching
+                        return Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              'Hasil pencarian untuk "${_viewModel.searchQuery}" (${_viewModel.menuItems.length} item)',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey[600],
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+                      return SizedBox.shrink();
+                    },
+                  ),
 
                   // Category Filter
                   Container(
@@ -544,6 +596,41 @@ class _MenuScreenState extends State<MenuScreen> {
                   AnimatedBuilder(
                     animation: _viewModel,
                     builder: (context, child) {
+                      if (_viewModel.menuItems.isEmpty && _viewModel.isSearchActive) {
+                        // Show no results found message
+                        return Container(
+                          height: 200,
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.search_off,
+                                  size: 64,
+                                  color: Colors.grey[400],
+                                ),
+                                SizedBox(height: 16),
+                                Text(
+                                  'Tidak ada menu yang ditemukan',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                                SizedBox(height: 8),
+                                Text(
+                                  'Coba kata kunci lain',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey[500],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+
                       return GridView.builder(
                         shrinkWrap: true, // Add this
                         physics: NeverScrollableScrollPhysics(), // Add this
