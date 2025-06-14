@@ -13,6 +13,7 @@ import 'dart:io'; // Import dart:io for File
 import '../models/payment.dart';
 import '../models/transaction.dart'; // Import Transaction model
 import 'payment_screen.dart';
+import 'order_status_screen.dart'; // Import the new OrderStatusScreen
 
 class MenuScreen extends StatefulWidget {
   @override
@@ -55,21 +56,43 @@ class _MenuScreenState extends State<MenuScreen> {
       final paymentBox = Hive.box<Payment>('paymentBox');
       final payment = paymentBox.get(lastTransactionId); // Assuming payment ID is same as transaction ID
 
-      if (transaction != null && payment != null && transaction.status != 'completed' && transaction.status != 'cancelled') {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => PaymentScreen(
-              payment: payment,
-              transaction: transaction,
+      if (transaction != null && payment != null) {
+        // Check if payment is completed (paid or processing order)
+        if (payment.status == 'completed' || transaction.status != 'pending') {
+          // Navigate to OrderStatusScreen for completed payments
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => OrderStatusScreen(
+                payment: payment,
+                transaction: transaction,
+              ),
             ),
-          ),
-        );
+          );
+        } else if (transaction.status != 'completed' && transaction.status != 'cancelled') {
+          // Navigate to PaymentScreen for pending payments
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => PaymentScreen(
+                payment: payment,
+                transaction: transaction,
+              ),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Tidak ada notifikasi pembayaran aktif.'),
+              backgroundColor: Colors.blue,
+            ),
+          );
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Tidak ada notifikasi pembayaran aktif.'),
-            backgroundColor: Colors.blue,
+            content: Text('Data transaksi tidak ditemukan.'),
+            backgroundColor: Colors.red,
           ),
         );
       }
@@ -226,12 +249,28 @@ class _MenuScreenState extends State<MenuScreen> {
                                     builder: (context, box, _) {
                                       final lastTransactionId = box.get('lastTransactionId');
                                       final transaction = lastTransactionId != null ? _transactionBox.get(lastTransactionId) : null;
-                                      final bool hasActiveTransaction = transaction != null &&
-                                          (transaction.status == 'pending' ||
-                                              transaction.status == 'preparing' ||
-                                              transaction.status == 'delivering');
+                                      final paymentBox = Hive.box<Payment>('paymentBox');
+                                      final payment = lastTransactionId != null ? paymentBox.get(lastTransactionId) : null;
+                                      
+                                      bool hasActiveNotification = false;
+                                      Color notificationColor = Colors.yellow;
+                                      
+                                      if (transaction != null && payment != null) {
+                                        // Show notification for pending payments
+                                        if (payment.status == 'pending') {
+                                          hasActiveNotification = true;
+                                          notificationColor = Colors.red; // Red for pending payment
+                                        }
+                                        // Show notification for active orders (paid, preparing, delivering)
+                                        else if (transaction.status == 'paid' || 
+                                                transaction.status == 'preparing' || 
+                                                transaction.status == 'delivering') {
+                                          hasActiveNotification = true;
+                                          notificationColor = Colors.green; // Green for active order
+                                        }
+                                      }
 
-                                      if (!hasActiveTransaction) {
+                                      if (!hasActiveNotification) {
                                         return SizedBox.shrink();
                                       }
 
@@ -241,7 +280,7 @@ class _MenuScreenState extends State<MenuScreen> {
                                         child: Container(
                                           padding: EdgeInsets.all(2),
                                           decoration: BoxDecoration(
-                                            color: Colors.yellow, // Indicate active transaction
+                                            color: notificationColor,
                                             borderRadius: BorderRadius.circular(10),
                                           ),
                                           constraints: BoxConstraints(
@@ -580,3 +619,4 @@ class _MenuScreenState extends State<MenuScreen> {
     );
   }
 }
+                
