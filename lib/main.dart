@@ -2,22 +2,29 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'screens/menu_screen.dart';
 import 'models/address.dart';
-import 'models/menu_item.dart'; // Import MenuItem
-import 'models/user.dart'; // Import User model
-import 'models/cart_item.dart'; // Import CartItem model
+import 'models/menu_item.dart';
+import 'models/user.dart';
+import 'models/cart_item.dart';
+import 'models/payment.dart'; // Add this import
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized(); // Ensure Flutter binding is initialized
+  WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
+  
+  // Register all adapters
   Hive.registerAdapter(AddressAdapter());
-  Hive.registerAdapter(MenuItemAdapter()); // Register MenuItemAdapter
-  Hive.registerAdapter(UserAdapter()); // Register UserAdapter
-  Hive.registerAdapter(CartItemAdapter()); // Register CartItemAdapter
+  Hive.registerAdapter(MenuItemAdapter());
+  Hive.registerAdapter(UserAdapter());
+  Hive.registerAdapter(CartItemAdapter());
+  Hive.registerAdapter(PaymentAdapter()); // Add this line
+  
+  // Open all boxes
   await Hive.openBox<Address>('addresses');
-  await Hive.openBox<MenuItem>('favoriteMenus'); // Open a new box for favorite menus
-  await Hive.openBox<User>('userBox'); // Open a new box for user data
-  await Hive.openBox<int>('selectedAddressIndexBox'); // Open a new box for selected address index
-  await Hive.openBox<CartItem>('cartBox'); // Open a new box for cart items
+  await Hive.openBox<MenuItem>('favoriteMenus');
+  await Hive.openBox<User>('userBox');
+  await Hive.openBox<int>('selectedAddressIndexBox');
+  await Hive.openBox<CartItem>('cartBox');
+  await Hive.openBox<Payment>('paymentBox'); // Add this line
   
   runApp(const MyApp());
 }

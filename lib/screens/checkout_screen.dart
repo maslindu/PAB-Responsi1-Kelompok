@@ -4,6 +4,8 @@ import '../models/address.dart';
 import '../viewmodels/menu_view_model.dart';
 import 'sliding_sidebar.dart'; // Import SlidingSidebar
 import 'address_list_screen.dart'; // Import AddressListScreen
+import '../models/payment.dart';
+import 'payment_screen.dart';
 
 class CheckoutScreen extends StatefulWidget {
   final MenuViewModel viewModel;
@@ -134,6 +136,69 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       _showSlidingSidebar(); // Add this line
     }
   }
+
+  void _onConfirmOrder() {
+  if (_selectedPaymentMethod == 'Transfer') {
+    // Create payment record
+    final payment = Payment(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      totalAmount: widget.viewModel.total,
+      paymentMethod: _selectedPaymentMethod,
+      createdAt: DateTime.now(),
+      expiresAt: DateTime.now().add(Duration(minutes: 10)),
+      orderDetails: _buildOrderDetails(),
+    );
+    
+    // Save to Hive
+    final paymentBox = Hive.box<Payment>('paymentBox');
+    paymentBox.put(payment.id, payment);
+    
+    // Navigate to payment screen
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PaymentScreen(payment: payment),
+      ),
+    ).then((_) {
+      // Clear cart only if payment is completed
+      if (payment.status == 'completed') {
+        widget.viewModel.clearCart();
+        Navigator.pop(context); // Return to menu screen
+      }
+    });
+  } else {
+    // For cash payment, show normal confirmation
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Konfirmasi Pesanan'),
+        content: Text('Pesanan Anda telah dikonfirmasi untuk pembayaran tunai!'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              widget.viewModel.clearCart();
+              Navigator.pop(context);
+            },
+            child: Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+String _buildOrderDetails() {
+  String details = 'Pesanan:\n';
+  for (var item in widget.viewModel.cartItems) {
+    details += '${item.menuItem.name} x${item.quantity} = Rp ${item.totalPrice.toStringAsFixed(0)}\n';
+  }
+  details += '\nSubtotal: Rp ${widget.viewModel.subtotal.toStringAsFixed(0)}';
+  details += '\nOngkir: Rp ${widget.viewModel.shippingCost.toStringAsFixed(0)}';
+  details += '\nBiaya Admin: Rp ${widget.viewModel.adminFee.toStringAsFixed(0)}';
+  details += '\nTotal: Rp ${widget.viewModel.total.toStringAsFixed(0)}';
+  return details;
+}
 
   @override
   Widget build(BuildContext context) {
@@ -694,25 +759,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
                         return ElevatedButton(
                           onPressed: widget.viewModel.cartItems.isNotEmpty && isAddressValid
-                              ? () {
-                                  showDialog(
-                                    context: context,
-                                    builder: (context) => AlertDialog(
-                                      title: Text('Konfirmasi Pesanan'),
-                                      content: Text('Pesanan Anda telah dikonfirmasi!'),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () {
-                                            Navigator.pop(context);
-                                            widget.viewModel.clearCart();
-                                            Navigator.pop(context);
-                                          },
-                                          child: Text('OK'),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                }
+                              ? _onConfirmOrder
                               : null,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Color(0xFFE53E3E),

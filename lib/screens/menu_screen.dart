@@ -10,6 +10,8 @@ import 'address_list_screen.dart';
 import 'edit_profile_screen.dart'; // Import the edit profile screen
 import '../models/user.dart'; // Import User model
 import 'dart:io'; // Import dart:io for File
+import '../models/payment.dart';
+import 'payment_screen.dart';
 
 class MenuScreen extends StatefulWidget {
   @override
@@ -40,6 +42,28 @@ class _MenuScreenState extends State<MenuScreen> {
     _searchController.dispose();
     super.dispose();
   }
+
+  Payment? get _activePendingPayment {
+  final paymentBox = Hive.box<Payment>('paymentBox');
+  for (var payment in paymentBox.values) {
+    if (payment.status == 'pending' && !payment.isExpired) {
+      return payment;
+    }
+  }
+  return null;
+}
+
+void _showPaymentDialog() {
+  final pendingPayment = _activePendingPayment;
+  if (pendingPayment != null) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PaymentScreen(payment: pendingPayment),
+      ),
+    );
+  }
+}
 
   void _onItemTapped(int index) {
     setState(() {
@@ -154,39 +178,54 @@ class _MenuScreenState extends State<MenuScreen> {
                                         : AssetImage('assets/images/default_profile.png'),
                               ),
                             ),
-                            Stack(
-                              children: [
-                                Icon(
-                                  Icons.notifications,
-                                  color: Colors.white,
-                                  size: 28,
-                                ),
-                                if (_viewModel.cartItemCount > 0)
-                                  Positioned(
-                                    right: 0,
-                                    top: 0,
-                                    child: Container(
-                                      padding: EdgeInsets.all(2),
-                                      decoration: BoxDecoration(
-                                        color: Colors.yellow,
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      constraints: BoxConstraints(
-                                        minWidth: 16,
-                                        minHeight: 16,
-                                      ),
-                                      child: Text(
-                                        '${_viewModel.cartItemCount}',
-                                        style: TextStyle(
-                                          color: Colors.black,
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ),
+                            GestureDetector(
+                              onTap: _showPaymentDialog,
+                              child: Stack(
+                                children: [
+                                  Icon(
+                                    Icons.notifications,
+                                    color: Colors.white,
+                                    size: 28,
                                   ),
-                              ],
+                                  
+                                  // Payment notification dot
+                                  ValueListenableBuilder<Box<Payment>>(
+                                    valueListenable: Hive.box<Payment>('paymentBox').listenable(),
+                                    builder: (context, box, _) {
+                                      final hasPendingPayment = _activePendingPayment != null;
+                                      
+                                      if (!hasPendingPayment && _viewModel.cartItemCount == 0) {
+                                        return SizedBox.shrink();
+                                      }
+                                      
+                                      return Positioned(
+                                        right: 0,
+                                        top: 0,
+                                        child: Container(
+                                          padding: EdgeInsets.all(2),
+                                          decoration: BoxDecoration(
+                                            color: hasPendingPayment ? Colors.yellow : Colors.orange,
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                          constraints: BoxConstraints(
+                                            minWidth: 16,
+                                            minHeight: 16,
+                                          ),
+                                          child: Text(
+                                            hasPendingPayment ? '!' : '${_viewModel.cartItemCount}',
+                                            style: TextStyle(
+                                              color: hasPendingPayment ? Colors.black : Colors.white,
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
                         ),
