@@ -22,11 +22,13 @@ class _OrderStatusScreenState extends State<OrderStatusScreen> {
   late Timer _timer;
   String _currentStatus = '';
   late Box<Transaction> _transactionBox;
+  late Box<String> _lastTransactionIdBox;
 
   @override
   void initState() {
     super.initState();
     _transactionBox = Hive.box<Transaction>('transactionBox');
+    _lastTransactionIdBox = Hive.box<String>('lastTransactionIdBox');
     _currentStatus = widget.transaction.statusText;
     
     // Start listening for transaction updates
@@ -78,6 +80,8 @@ class _OrderStatusScreenState extends State<OrderStatusScreen> {
         actions: [
           TextButton(
             onPressed: () {
+              // Clear last transaction ID to hide notification
+              _lastTransactionIdBox.delete('lastTransactionId');
               Navigator.pop(context); // Close dialog
               Navigator.pop(context); // Close order status screen
             },
@@ -327,6 +331,32 @@ class _OrderStatusScreenState extends State<OrderStatusScreen> {
                   }).toList(),
                   
                   Divider(height: 24),
+
+                  // Display notes if available
+                  if (widget.transaction.notes.isNotEmpty) ...[
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Catatan: ',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Expanded(
+                          child: Text(
+                            widget.transaction.notes,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[700],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Divider(height: 24),
+                  ],
                   
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -462,11 +492,11 @@ class _OrderStatusScreenState extends State<OrderStatusScreen> {
                       Container(
                         padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                         decoration: BoxDecoration(
-                          color: Colors.green,
+                          color: widget.transaction.paymentMethod == 'Tunai' ? Colors.orange : Colors.green,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
-                          'Lunas',
+                          widget.transaction.paymentStatusText,
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 12,

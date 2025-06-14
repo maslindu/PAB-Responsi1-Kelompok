@@ -170,18 +170,18 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   void _startOrderProcessing() async {
     // Step 1: Payment confirmed (already done)
-    // Step 2: Preparing (after 3 seconds)
-    await Future.delayed(Duration(seconds: 3));
+    // Step 2: Preparing (after 7 seconds)
+    await Future.delayed(Duration(seconds: 7));
     widget.transaction.status = 'preparing';
     await _transactionBox.put(widget.transaction.id, widget.transaction);
 
-    // Step 3: Delivering (after 30 seconds)
-    await Future.delayed(Duration(seconds: 30));
+    // Step 3: Delivering (after 15 seconds)
+    await Future.delayed(Duration(seconds: 15));
     widget.transaction.status = 'delivering';
     await _transactionBox.put(widget.transaction.id, widget.transaction);
 
-    // Step 4: Completed (after 1 minute)
-    await Future.delayed(Duration(seconds: 60));
+    // Step 4: Completed (after 15 seconds)
+    await Future.delayed(Duration(seconds: 15));
     widget.transaction.status = 'completed';
     widget.transaction.completedAt = DateTime.now();
     await _transactionBox.put(widget.transaction.id, widget.transaction);

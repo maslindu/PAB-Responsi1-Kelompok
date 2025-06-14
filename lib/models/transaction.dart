@@ -38,6 +38,9 @@ class Transaction extends HiveObject {
   @HiveField(10)
   DateTime? completedAt;
 
+  @HiveField(11)
+  String notes; // Add notes field
+
   Transaction({
     required this.id,
     required this.items,
@@ -50,6 +53,7 @@ class Transaction extends HiveObject {
     required this.recipientName,
     required this.recipientPhone,
     this.completedAt,
+    this.notes = '', // Add notes parameter
   });
 
   String get statusText {
@@ -68,6 +72,14 @@ class Transaction extends HiveObject {
         return 'Pesanan Gagal';
       default:
         return 'Status Tidak Diketahui';
+    }
+  }
+
+  String get paymentStatusText {
+    if (paymentMethod == 'Tunai') {
+      return 'COD (Cash on Delivery)';
+    } else {
+      return 'Lunas';
     }
   }
 

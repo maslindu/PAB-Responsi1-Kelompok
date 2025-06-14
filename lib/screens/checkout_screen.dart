@@ -155,7 +155,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       return;
     }
 
-    // Create transaction record
+    // Create transaction record with notes
     final transactionId = DateTime.now().millisecondsSinceEpoch.toString();
     final transaction = Transaction(
       id: transactionId,
@@ -167,6 +167,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       deliveryAddress: selectedAddress.fullAddress,
       recipientName: selectedAddress.recipientName,
       recipientPhone: selectedAddress.phoneNumber,
+      notes: widget.viewModel.notes, // Include notes from view model
     );
 
     // Save transaction
@@ -245,20 +246,20 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   void _startOrderProcessing(Transaction transaction) async {
     final transactionBox = Hive.box<Transaction>('transactionBox');
     
-    // Update status to preparing after 2 seconds
-    Future.delayed(Duration(seconds: 2), () async {
+    // Update status to preparing after 7 seconds
+    Future.delayed(Duration(seconds: 7), () async {
       transaction.status = 'preparing';
       await transactionBox.put(transaction.id, transaction);
     });
 
-    // Update status to delivering after 1 minute
-    Future.delayed(Duration(minutes: 1), () async {
+    // Update status to delivering after 15 seconds (7 + 15 = 22 seconds total)
+    Future.delayed(Duration(seconds: 22), () async {
       transaction.status = 'delivering';
       await transactionBox.put(transaction.id, transaction);
     });
 
-    // Update status to completed after 2 minutes
-    Future.delayed(Duration(minutes: 2), () async {
+    // Update status to completed after 15 more seconds (7 + 15 + 15 = 37 seconds total)
+    Future.delayed(Duration(seconds: 37), () async {
       transaction.status = 'completed';
       transaction.completedAt = DateTime.now();
       await transactionBox.put(transaction.id, transaction);

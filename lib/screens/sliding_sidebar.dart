@@ -230,18 +230,7 @@ class _SlidingSidebarState extends State<SlidingSidebar>
                                             ),
                                           );
                                         },
-                                      ),
-                                      _buildMenuItem(
-                                        icon: Image.asset(
-                                          'assets/images/icons/LoyaltyCard.png',
-                                          width: 24,
-                                          height: 24,
-                                        ),
-                                        title: 'Promo yang Dimiliki',
-                                        onTap: () {
-                                          Navigator.pop(context);
-                                        },
-                                      ),
+                                      ),                                      
                                       const SizedBox(height: 16),
                                       Container(
                                         alignment: Alignment.center,
