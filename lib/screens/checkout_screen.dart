@@ -7,7 +7,6 @@ import 'address_list_screen.dart';
 import '../models/payment.dart';
 import '../models/transaction.dart';
 import 'payment_screen.dart';
-// import 'payment_status_screen.dart'; // Removed this import
 
 class CheckoutScreen extends StatefulWidget {
   final MenuViewModel viewModel;
@@ -24,7 +23,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   int _selectedIndex = 1;
   late Box<Address> _addressBox;
   late Box<int> _selectedAddressIndexBox;
-  late Box<String> _lastTransactionIdBox; // Add this
+  late Box<String> _lastTransactionIdBox;
   String _selectedPaymentMethod = 'Transfer';
 
   @override
@@ -32,7 +31,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     super.initState();
     _addressBox = Hive.box<Address>('addresses');
     _selectedAddressIndexBox = Hive.box<int>('selectedAddressIndexBox');
-    _lastTransactionIdBox = Hive.box<String>('lastTransactionIdBox'); // Initialize
+    _lastTransactionIdBox = Hive.box<String>('lastTransactionIdBox');
     _notesController.text = widget.viewModel.notes;
     _notesController.addListener(() {
       widget.viewModel.setNotes(_notesController.text);
@@ -130,6 +129,24 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
+  void _applyPromoCode() {
+    if (_promoController.text.isNotEmpty) {
+      final result = widget.viewModel.applyPromoCode(_promoController.text);
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result),
+          backgroundColor: result.contains('berhasil') ? Colors.green : Colors.red,
+          duration: Duration(seconds: 3),
+        ),
+      );
+      
+      if (result.contains('berhasil')) {
+        _promoController.clear();
+      }
+    }
+  }
+
   void _onItemTapped(int index) {
     if (index == 0) {
       Navigator.pop(context);
@@ -173,18 +190,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     // Save transaction
     final transactionBox = Hive.box<Transaction>('transactionBox');
     await transactionBox.put(transaction.id, transaction);
-    await _lastTransactionIdBox.put('lastTransactionId', transaction.id); // Save last transaction ID
+    await _lastTransactionIdBox.put('lastTransactionId', transaction.id);
 
     if (_selectedPaymentMethod == 'Transfer') {
       // Create payment record
       final payment = Payment(
-        id: transactionId, // Use same ID as transaction
+        id: transactionId,
         totalAmount: widget.viewModel.total,
         paymentMethod: _selectedPaymentMethod,
         createdAt: DateTime.now(),
         expiresAt: DateTime.now().add(Duration(minutes: 10)),
         orderDetails: _buildOrderDetails(),
-        transactionId: transactionId, // Pass transactionId
+        transactionId: transactionId,
       );
       
       // Save to Hive
@@ -200,11 +217,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         MaterialPageRoute(
           builder: (context) => PaymentScreen(
             payment: payment,
-            transaction: transaction, // Pass transaction to payment screen
+            transaction: transaction,
           ),
         ),
       ).then((_) {
-        Navigator.pop(context); // Return to menu screen after PaymentScreen is popped
+        Navigator.pop(context);
       });
     } else {
       // For cash payment, create a payment record with 'paid' status
@@ -213,10 +230,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         totalAmount: widget.viewModel.total,
         paymentMethod: _selectedPaymentMethod,
         createdAt: DateTime.now(),
-        expiresAt: DateTime.now(), // No expiration for cash
+        expiresAt: DateTime.now(),
         orderDetails: _buildOrderDetails(),
         transactionId: transactionId,
-        status: 'paid', // Immediately set to paid for cash
+        status: 'paid',
       );
 
       final paymentBox = Hive.box<Payment>('paymentBox');
@@ -238,7 +255,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ),
         ),
       ).then((_) {
-        Navigator.pop(context); // Return to menu screen after PaymentScreen is popped
+        Navigator.pop(context);
       });
     }
   }
@@ -274,6 +291,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     details += '\nSubtotal: Rp ${widget.viewModel.subtotal.toStringAsFixed(0)}';
     details += '\nOngkir: Rp ${widget.viewModel.shippingCost.toStringAsFixed(0)}';
     details += '\nBiaya Admin: Rp ${widget.viewModel.adminFee.toStringAsFixed(0)}';
+    
+    // Add discount info if applied
+    if (widget.viewModel.isPromoApplied) {
+      details += '\nDiskon (${widget.viewModel.promoCode}): -Rp ${widget.viewModel.discountAmount.toStringAsFixed(0)}';
+    }
+    
     details += '\nTotal: Rp ${widget.viewModel.total.toStringAsFixed(0)}';
     return details;
   }
@@ -703,6 +726,45 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                       ),
                                     ],
                                   ),
+                                  
+                                  // Show discount if applied
+                                  if (widget.viewModel.isPromoApplied) ...[
+                                    SizedBox(height: 8),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Text('Diskon (${widget.viewModel.promoCode})',
+                                              style: TextStyle(color: Colors.green[700]),
+                                            ),
+                                            SizedBox(width: 8),
+                                            GestureDetector(
+                                              onTap: () {
+                                                widget.viewModel.removePromoCode();
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  SnackBar(
+                                                    content: Text('Kode promo dihapus'),
+                                                    backgroundColor: Colors.orange,
+                                                  ),
+                                                );
+                                              },
+                                              child: Icon(
+                                                Icons.close,
+                                                size: 16,
+                                                color: Colors.red,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        Text(
+                                          '-Rp ${widget.viewModel.discountAmount.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}',
+                                          style: TextStyle(color: Colors.green[700]),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                  
                                   Divider(height: 24),
 
                                   Row(
@@ -731,7 +793,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
                           SizedBox(height: 16),
 
-                          // Promo Code
+                          // Promo Code Section
                           Row(
                             children: [
                               Expanded(
@@ -749,6 +811,27 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                       horizontal: 12,
                                       vertical: 8,
                                     ),
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: 8),
+                              ElevatedButton(
+                                onPressed: _applyPromoCode,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.blue,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 12,
+                                  ),
+                                ),
+                                child: Text(
+                                  'Terapkan',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
                               ),

@@ -140,6 +140,13 @@ class MenuViewModel extends ChangeNotifier {
   String _selectedCategory = 'Semua';
   String _searchQuery = '';
   String _notes = ''; // New field for notes
+  String _promoCode = ''; // New field for promo code
+  bool _isPromoApplied = false; // Track if promo is applied
+
+  // Valid promo codes and their discounts
+  final Map<String, double> _validPromoCodes = {
+    'JAWA MUDA': 0.10, // 10% discount
+  };
 
   // Getters
   List<MenuItem> get menuItems {
@@ -168,6 +175,8 @@ class MenuViewModel extends ChangeNotifier {
   String get selectedCategory => _selectedCategory;
   String get searchQuery => _searchQuery;
   String get notes => _notes; // Getter for notes
+  String get promoCode => _promoCode; // Getter for promo code
+  bool get isPromoApplied => _isPromoApplied; // Getter for promo status
 
   double get subtotal =>
       _cartItems.fold(0, (sum, item) => sum + item.totalPrice);
@@ -177,7 +186,17 @@ class MenuViewModel extends ChangeNotifier {
   }
 
   double get adminFee => 1000;
-  double get total => subtotal + shippingCost + adminFee;
+  
+  // Calculate discount amount
+  double get discountAmount {
+    if (_isPromoApplied && _validPromoCodes.containsKey(_promoCode)) {
+      return subtotal * _validPromoCodes[_promoCode]!;
+    }
+    return 0.0;
+  }
+  
+  // Calculate total with discount
+  double get total => subtotal + shippingCost + adminFee - discountAmount;
 
   int get cartItemCount =>
       _cartItems.fold(0, (sum, item) => sum + item.quantity);
@@ -204,6 +223,33 @@ class MenuViewModel extends ChangeNotifier {
   void setNotes(String notes) {
     _notes = notes;
     notifyListeners();
+  }
+
+  // Promo code methods
+  String applyPromoCode(String code) {
+    final upperCode = code.toUpperCase();
+    
+    if (_validPromoCodes.containsKey(upperCode)) {
+      _promoCode = upperCode;
+      _isPromoApplied = true;
+      notifyListeners();
+      return 'Kode promo "$upperCode" berhasil diterapkan! Anda mendapat diskon ${(_validPromoCodes[upperCode]! * 100).toInt()}%';
+    } else {
+      return 'Kode promo tidak valid';
+    }
+  }
+
+  void removePromoCode() {
+    _promoCode = '';
+    _isPromoApplied = false;
+    notifyListeners();
+  }
+
+  double getDiscountPercentage() {
+    if (_isPromoApplied && _validPromoCodes.containsKey(_promoCode)) {
+      return _validPromoCodes[_promoCode]! * 100;
+    }
+    return 0.0;
   }
 
   void addToCart(MenuItem menuItem, int quantity) {
@@ -248,6 +294,9 @@ class MenuViewModel extends ChangeNotifier {
   void clearCart() {
     _cartItems.clear();
     _cartBox.clear(); // Clear Hive box
+    // Reset promo code when clearing cart
+    _promoCode = '';
+    _isPromoApplied = false;
     notifyListeners();
   }
 

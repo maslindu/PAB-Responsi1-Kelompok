@@ -33,6 +33,7 @@ class _MenuScreenState extends State<MenuScreen> {
   @override
   void initState() {
     super.initState();
+    // Fix the search functionality - add listener for real-time search
     _searchController.addListener(() {
       _viewModel.setSearchQuery(_searchController.text);
     });
@@ -335,6 +336,11 @@ class _MenuScreenState extends State<MenuScreen> {
                                 vertical: 12,
                               ),
                             ),
+                            // Add this to trigger search on every text change
+                            onChanged: (value) {
+                              // This will automatically trigger the search
+                              // because we already have the listener set up in initState
+                            },
                           ),
                         ),
                       ],
@@ -535,22 +541,27 @@ class _MenuScreenState extends State<MenuScreen> {
                   SizedBox(height: 16),
 
                   // Menu Grid
-                  GridView.builder(
-                    shrinkWrap: true, // Add this
-                    physics: NeverScrollableScrollPhysics(), // Add this
-                    padding: EdgeInsets.symmetric(horizontal: 16),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      childAspectRatio: 0.8,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                    ),
-                    itemCount: _viewModel.menuItems.length,
-                    itemBuilder: (context, index) {
-                      final item = _viewModel.menuItems[index];
-                      return MenuCard(
-                        menuItem: item,
-                        onTap: () => _showMenuDetail(item),
+                  AnimatedBuilder(
+                    animation: _viewModel,
+                    builder: (context, child) {
+                      return GridView.builder(
+                        shrinkWrap: true, // Add this
+                        physics: NeverScrollableScrollPhysics(), // Add this
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          childAspectRatio: 0.8,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                        ),
+                        itemCount: _viewModel.menuItems.length,
+                        itemBuilder: (context, index) {
+                          final item = _viewModel.menuItems[index];
+                          return MenuCard(
+                            menuItem: item,
+                            onTap: () => _showMenuDetail(item),
+                          );
+                        },
                       );
                     },
                   ),
@@ -619,4 +630,3 @@ class _MenuScreenState extends State<MenuScreen> {
     );
   }
 }
-                
