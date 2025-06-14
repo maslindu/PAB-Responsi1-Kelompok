@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/address.dart';
 import '../viewmodels/menu_view_model.dart';
-import 'sliding_sidebar.dart'; // Import SlidingSidebar
-import 'address_list_screen.dart'; // Import AddressListScreen
+import 'sliding_sidebar.dart';
+import 'address_list_screen.dart';
 import '../models/payment.dart';
+import '../models/transaction.dart'; // Add this import
 import 'payment_screen.dart';
 
 class CheckoutScreen extends StatefulWidget {
@@ -18,27 +19,27 @@ class CheckoutScreen extends StatefulWidget {
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
   final TextEditingController _promoController = TextEditingController();
-  final TextEditingController _notesController = TextEditingController(); // Controller for notes
-  int _selectedIndex = 1; // Cart tab selected
+  final TextEditingController _notesController = TextEditingController();
+  int _selectedIndex = 1;
   late Box<Address> _addressBox;
   late Box<int> _selectedAddressIndexBox;
-  String _selectedPaymentMethod = 'Transfer'; // Added state variable for payment method
+  String _selectedPaymentMethod = 'Transfer';
 
   @override
   void initState() {
     super.initState();
     _addressBox = Hive.box<Address>('addresses');
     _selectedAddressIndexBox = Hive.box<int>('selectedAddressIndexBox');
-    _notesController.text = widget.viewModel.notes; // Load existing notes
+    _notesController.text = widget.viewModel.notes;
     _notesController.addListener(() {
-      widget.viewModel.setNotes(_notesController.text); // Update notes in ViewModel
+      widget.viewModel.setNotes(_notesController.text);
     });
   }
 
   @override
   void dispose() {
     _promoController.dispose();
-    _notesController.dispose(); // Dispose notes controller
+    _notesController.dispose();
     super.dispose();
   }
 
@@ -100,7 +101,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               ListTile(
-                leading: Icon(Icons.payment), // Icon for Transfer
+                leading: Icon(Icons.payment),
                 title: const Text('Transfer'),
                 onTap: () {
                   setState(() {
@@ -110,7 +111,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 },
               ),
               ListTile(
-                leading: Icon(Icons.money), // Icon for Tunai
+                leading: Icon(Icons.money),
                 title: const Text('Tunai'),
                 onTap: () {
                   setState(() {
@@ -126,79 +127,140 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  // Modify _onItemTapped method
   void _onItemTapped(int index) {
     if (index == 0) {
-      // Home tab
       Navigator.pop(context);
     } else if (index == 2) {
-      // Menu tab
-      _showSlidingSidebar(); // Add this line
+      _showSlidingSidebar();
     }
   }
 
-  void _onConfirmOrder() {
-  if (_selectedPaymentMethod == 'Transfer') {
-    // Create payment record
-    final payment = Payment(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+  void _onConfirmOrder() async {
+    // Get selected address
+    final selectedIndex = _selectedAddressIndexBox.get('selected');
+    final selectedAddress = selectedIndex != null && _addressBox.isNotEmpty
+        ? _addressBox.getAt(selectedIndex)
+        : null;
+
+    if (selectedAddress == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Silakan pilih alamat pengiriman terlebih dahulu'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Create transaction record
+    final transactionId = DateTime.now().millisecondsSinceEpoch.toString();
+    final transaction = Transaction(
+      id: transactionId,
+      items: List.from(widget.viewModel.cartItems), // Copy cart items
       totalAmount: widget.viewModel.total,
       paymentMethod: _selectedPaymentMethod,
       createdAt: DateTime.now(),
-      expiresAt: DateTime.now().add(Duration(minutes: 10)),
-      orderDetails: _buildOrderDetails(),
+      status: _selectedPaymentMethod == 'Transfer' ? 'pending' : 'paid',
+      deliveryAddress: selectedAddress.fullAddress,
+      recipientName: selectedAddress.recipientName,
+      recipientPhone: selectedAddress.phoneNumber,
     );
-    
-    // Save to Hive
-    final paymentBox = Hive.box<Payment>('paymentBox');
-    paymentBox.put(payment.id, payment);
-    
-    // Navigate to payment screen
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => PaymentScreen(payment: payment),
-      ),
-    ).then((_) {
-      // Clear cart only if payment is completed
-      if (payment.status == 'completed') {
-        widget.viewModel.clearCart();
-        Navigator.pop(context); // Return to menu screen
-      }
-    });
-  } else {
-    // For cash payment, show normal confirmation
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Konfirmasi Pesanan'),
-        content: Text('Pesanan Anda telah dikonfirmasi untuk pembayaran tunai!'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              widget.viewModel.clearCart();
-              Navigator.pop(context);
-            },
-            child: Text('OK'),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
-String _buildOrderDetails() {
-  String details = 'Pesanan:\n';
-  for (var item in widget.viewModel.cartItems) {
-    details += '${item.menuItem.name} x${item.quantity} = Rp ${item.totalPrice.toStringAsFixed(0)}\n';
+    // Save transaction
+    final transactionBox = Hive.box<Transaction>('transactionBox');
+    await transactionBox.put(transaction.id, transaction);
+
+    if (_selectedPaymentMethod == 'Transfer') {
+      // Create payment record
+      final payment = Payment(
+        id: transactionId, // Use same ID as transaction
+        totalAmount: widget.viewModel.total,
+        paymentMethod: _selectedPaymentMethod,
+        createdAt: DateTime.now(),
+        expiresAt: DateTime.now().add(Duration(minutes: 10)),
+        orderDetails: _buildOrderDetails(),
+        transactionId: transactionId, // Pass transactionId
+      );
+      
+      // Save to Hive
+      final paymentBox = Hive.box<Payment>('paymentBox');
+      await paymentBox.put(payment.id, payment);
+      
+      // Clear cart immediately after creating transaction
+      widget.viewModel.clearCart();
+      
+      // Navigate to payment screen
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PaymentScreen(
+            payment: payment,
+            transaction: transaction, // Pass transaction to payment screen
+          ),
+        ),
+      ).then((_) {
+        Navigator.pop(context); // Return to menu screen
+      });
+    } else {
+      // For cash payment, start processing immediately
+      _startOrderProcessing(transaction);
+      
+      // Clear cart
+      widget.viewModel.clearCart();
+      
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Konfirmasi Pesanan'),
+          content: Text('Pesanan Anda telah dikonfirmasi untuk pembayaran tunai! Makanan akan segera disiapkan.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.pop(context);
+              },
+              child: Text('OK'),
+            ),
+          ],
+        ),
+      );
+    }
   }
-  details += '\nSubtotal: Rp ${widget.viewModel.subtotal.toStringAsFixed(0)}';
-  details += '\nOngkir: Rp ${widget.viewModel.shippingCost.toStringAsFixed(0)}';
-  details += '\nBiaya Admin: Rp ${widget.viewModel.adminFee.toStringAsFixed(0)}';
-  details += '\nTotal: Rp ${widget.viewModel.total.toStringAsFixed(0)}';
-  return details;
-}
+
+  void _startOrderProcessing(Transaction transaction) async {
+    final transactionBox = Hive.box<Transaction>('transactionBox');
+    
+    // Update status to preparing after 2 seconds
+    Future.delayed(Duration(seconds: 2), () async {
+      transaction.status = 'preparing';
+      await transactionBox.put(transaction.id, transaction);
+    });
+
+    // Update status to delivering after 1 minute
+    Future.delayed(Duration(minutes: 1), () async {
+      transaction.status = 'delivering';
+      await transactionBox.put(transaction.id, transaction);
+    });
+
+    // Update status to completed after 2 minutes
+    Future.delayed(Duration(minutes: 2), () async {
+      transaction.status = 'completed';
+      transaction.completedAt = DateTime.now();
+      await transactionBox.put(transaction.id, transaction);
+    });
+  }
+
+  String _buildOrderDetails() {
+    String details = 'Pesanan:\n';
+    for (var item in widget.viewModel.cartItems) {
+      details += '${item.menuItem.name} x${item.quantity} = Rp ${item.totalPrice.toStringAsFixed(0)}\n';
+    }
+    details += '\nSubtotal: Rp ${widget.viewModel.subtotal.toStringAsFixed(0)}';
+    details += '\nOngkir: Rp ${widget.viewModel.shippingCost.toStringAsFixed(0)}';
+    details += '\nBiaya Admin: Rp ${widget.viewModel.adminFee.toStringAsFixed(0)}';
+    details += '\nTotal: Rp ${widget.viewModel.total.toStringAsFixed(0)}';
+    return details;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -208,12 +270,11 @@ String _buildOrderDetails() {
         child: Column(
           children: [
             SizedBox(height: 16),
-
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
                   children: [
-                    // Address Section - Moved inside SingleChildScrollView
+                    // Address Section
                     ValueListenableBuilder<Box<int>>(
                       valueListenable: _selectedAddressIndexBox.listenable(),
                       builder: (context, box, _) {
@@ -239,22 +300,21 @@ String _buildOrderDetails() {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      selectedAddress?.recipientName ?? 'Nama Penerima', // Use selected address or default
-                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16), // Added fontSize
+                                      selectedAddress?.recipientName ?? 'Nama Penerima',
+                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                                     ),
-                                    Text(selectedAddress?.fullAddress ?? 'Alamat penerima'), // Use selected address or default
+                                    Text(selectedAddress?.fullAddress ?? 'Alamat penerima'),
                                   ],
                                 ),
                               ),
                               GestureDetector(
-                                onTap: () async { // Make the onTap async
+                                onTap: () async {
                                   await Navigator.push(
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) => AddressListScreen(),
                                     ),
                                   );
-                                  // No need to setState here, ValueListenableBuilder handles it
                                 },
                                 child: Container(
                                   padding: EdgeInsets.symmetric(
@@ -295,7 +355,6 @@ String _buildOrderDetails() {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          //pesanan title
                           Text(
                             'Pesanan',
                             style: TextStyle(
@@ -325,9 +384,7 @@ String _buildOrderDetails() {
                               }
 
                               return Column(
-                                children: widget.viewModel.cartItems.map((
-                                  cartItem,
-                                ) {
+                                children: widget.viewModel.cartItems.map((cartItem) {
                                   return Container(
                                     margin: EdgeInsets.only(bottom: 16),
                                     child: Row(
@@ -338,29 +395,24 @@ String _buildOrderDetails() {
                                           height: 60,
                                           decoration: BoxDecoration(
                                             color: Colors.grey[200],
-                                            borderRadius: BorderRadius.circular(
-                                              8,
-                                            ),
+                                            borderRadius: BorderRadius.circular(8),
                                           ),
                                           child: ClipRRect(
-                                            borderRadius: BorderRadius.circular(
-                                              8,
-                                            ),
+                                            borderRadius: BorderRadius.circular(8),
                                             child: Image.asset(
                                               cartItem.menuItem.image,
                                               width: 150,
                                               height: 150,
                                               fit: BoxFit.cover,
-                                              errorBuilder:
-                                                  (context, error, stackTrace) {
-                                                    return Container(
-                                                      color: Colors.grey[300],
-                                                      child: Icon(
-                                                        Icons.image,
-                                                        color: Colors.grey[600],
-                                                      ),
-                                                    );
-                                                  },
+                                              errorBuilder: (context, error, stackTrace) {
+                                                return Container(
+                                                  color: Colors.grey[300],
+                                                  child: Icon(
+                                                    Icons.image,
+                                                    color: Colors.grey[600],
+                                                  ),
+                                                );
+                                              },
                                             ),
                                           ),
                                         ),
@@ -370,8 +422,7 @@ String _buildOrderDetails() {
                                         // Product Info
                                         Expanded(
                                           child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
+                                            crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
                                               Text(
                                                 cartItem.menuItem.name,
@@ -392,50 +443,38 @@ String _buildOrderDetails() {
                                                 children: [
                                                   // Decrease button
                                                   Container(
-                                                    width:
-                                                        24, // Ukuran dikecilkan
-                                                    height:
-                                                        24, // Ukuran dikecilkan
+                                                    width: 24,
+                                                    height: 24,
                                                     decoration: BoxDecoration(
                                                       color: Colors.blue,
                                                       shape: BoxShape.circle,
                                                       border: Border.all(
                                                         color: Colors.black,
                                                         width: 1,
-                                                      ), // Tambah border hitam
+                                                      ),
                                                     ),
                                                     child: IconButton(
                                                       padding: EdgeInsets.zero,
                                                       onPressed: () {
-                                                        widget.viewModel
-                                                            .updateCartItemQuantity(
-                                                              cartItem
-                                                                  .menuItem
-                                                                  .id,
-                                                              cartItem.quantity -
-                                                                  1,
-                                                            );
+                                                        widget.viewModel.updateCartItemQuantity(
+                                                          cartItem.menuItem.id,
+                                                          cartItem.quantity - 1,
+                                                        );
                                                       },
                                                       icon: Icon(
                                                         Icons.remove,
                                                         color: Colors.white,
-                                                        size:
-                                                            14, // Ukuran icon dikecilkan
+                                                        size: 14,
                                                       ),
                                                     ),
                                                   ),
 
                                                   Container(
-                                                    margin:
-                                                        EdgeInsets.symmetric(
-                                                          horizontal: 8,
-                                                        ),
+                                                    margin: EdgeInsets.symmetric(horizontal: 8),
                                                     child: Text(
-                                                      cartItem.quantity
-                                                          .toString(),
+                                                      cartItem.quantity.toString(),
                                                       style: TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.bold,
+                                                        fontWeight: FontWeight.bold,
                                                         fontSize: 16,
                                                       ),
                                                     ),
@@ -443,63 +482,47 @@ String _buildOrderDetails() {
 
                                                   // Increase button
                                                   Container(
-                                                    width:
-                                                        24, // Ukuran dikecilkan
-                                                    height:
-                                                        24, // Ukuran dikecilkan
+                                                    width: 24,
+                                                    height: 24,
                                                     decoration: BoxDecoration(
                                                       color: Colors.blue,
                                                       shape: BoxShape.circle,
                                                       border: Border.all(
                                                         color: Colors.black,
                                                         width: 1,
-                                                      ), // Tambah border hitam
+                                                      ),
                                                     ),
                                                     child: IconButton(
                                                       padding: EdgeInsets.zero,
                                                       onPressed: () {
-                                                        widget.viewModel
-                                                            .updateCartItemQuantity(
-                                                              cartItem
-                                                                  .menuItem
-                                                                  .id,
-                                                              cartItem.quantity +
-                                                                  1,
-                                                            );
+                                                        widget.viewModel.updateCartItemQuantity(
+                                                          cartItem.menuItem.id,
+                                                          cartItem.quantity + 1,
+                                                        );
                                                       },
                                                       icon: Icon(
                                                         Icons.add,
                                                         color: Colors.white,
-                                                        size:
-                                                            14, // Ukuran icon dikecilkan
+                                                        size: 14,
                                                       ),
                                                     ),
                                                   ),
 
-                                                  SizedBox(
-                                                    width: 8,
-                                                  ), // Jarak antara tombol plus dan delete
-                                                  // Delete button dipindah ke samping tombol plus
+                                                  SizedBox(width: 8),
+                                                  
+                                                  // Delete button
                                                   Container(
-                                                    width:
-                                                        24, // Ukuran disesuaikan dengan tombol lain
-                                                    height:
-                                                        24, // Ukuran disesuaikan dengan tombol lain
+                                                    width: 24,
+                                                    height: 24,
                                                     child: IconButton(
                                                       padding: EdgeInsets.zero,
                                                       onPressed: () {
-                                                        widget.viewModel
-                                                            .removeFromCart(
-                                                              cartItem
-                                                                  .menuItem
-                                                                  .id,
-                                                            );
+                                                        widget.viewModel.removeFromCart(cartItem.menuItem.id);
                                                       },
                                                       icon: Icon(
                                                         Icons.delete,
                                                         color: Colors.red,
-                                                        size:
-                                                            18, // Ukuran icon dikecilkan
+                                                        size: 18,
                                                       ),
                                                     ),
                                                   ),
@@ -508,14 +531,12 @@ String _buildOrderDetails() {
 
                                                   // Price
                                                   Column(
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment.end,
+                                                    crossAxisAlignment: CrossAxisAlignment.end,
                                                     children: [
                                                       Text(
                                                         'Rp ${cartItem.totalPrice.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}',
                                                         style: TextStyle(
-                                                          fontWeight:
-                                                              FontWeight.bold,
+                                                          fontWeight: FontWeight.bold,
                                                           fontSize: 14,
                                                         ),
                                                       ),
@@ -536,7 +557,7 @@ String _buildOrderDetails() {
 
                           Divider(),
 
-                          // Notes Section (Button)
+                          // Notes Section
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -578,7 +599,9 @@ String _buildOrderDetails() {
                         ],
                       ),
                     ),
+                    
                     SizedBox(height: 16),
+                    
                     // Payment Method Section
                     Container(
                       margin: EdgeInsets.symmetric(horizontal: 16),
@@ -589,12 +612,10 @@ String _buildOrderDetails() {
                         border: Border.all(color: Colors.grey[300]!),
                       ),
                       child: Column(
-                        //payment method content
                         children: [
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              //metode pembayaran
                               Text(
                                 'Metode Pembayaran',
                                 style: TextStyle(
@@ -602,12 +623,11 @@ String _buildOrderDetails() {
                                   fontSize: 16,
                                 ),
                               ),
-                              //payment option button
                               ElevatedButton(
-                                onPressed: _showPaymentMethodDialog, // Call the dialog function
+                                onPressed: _showPaymentMethodDialog,
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.red, // Warna latar
-                                  foregroundColor: Colors.black, // Warna teks
+                                  backgroundColor: Colors.red,
+                                  foregroundColor: Colors.black,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(20),
                                   ),
@@ -618,7 +638,7 @@ String _buildOrderDetails() {
                                   elevation: 0,
                                 ),
                                 child: Text(
-                                  _selectedPaymentMethod, // Display selected payment method
+                                  _selectedPaymentMethod,
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.bold,
@@ -630,16 +650,14 @@ String _buildOrderDetails() {
 
                           SizedBox(height: 16),
 
-                          // Payment Details(subtotal, ongkir, admin fee, total)
+                          // Payment Details
                           AnimatedBuilder(
                             animation: widget.viewModel,
                             builder: (context, child) {
                               return Column(
                                 children: [
                                   Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    //subtotal
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
                                       Text('Subtotal'),
                                       Text(
@@ -649,10 +667,8 @@ String _buildOrderDetails() {
                                   ),
                                   SizedBox(height: 8),
 
-                                  //biaya ongkir
                                   Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
                                       Text('Ongkir'),
                                       Text(
@@ -662,10 +678,8 @@ String _buildOrderDetails() {
                                   ),
                                   SizedBox(height: 8),
 
-                                  //biaya admin
                                   Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
                                       Text('Biaya Admin'),
                                       Text(
@@ -675,10 +689,8 @@ String _buildOrderDetails() {
                                   ),
                                   Divider(height: 24),
 
-                                  //total price
                                   Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
                                       Text(
                                         'Total',

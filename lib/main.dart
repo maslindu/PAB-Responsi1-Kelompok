@@ -5,7 +5,8 @@ import 'models/address.dart';
 import 'models/menu_item.dart';
 import 'models/user.dart';
 import 'models/cart_item.dart';
-import 'models/payment.dart'; // Add this import
+import 'models/payment.dart';
+import 'models/transaction.dart'; // Add this import
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,7 +17,8 @@ void main() async {
   Hive.registerAdapter(MenuItemAdapter());
   Hive.registerAdapter(UserAdapter());
   Hive.registerAdapter(CartItemAdapter());
-  Hive.registerAdapter(PaymentAdapter()); // Add this line
+  Hive.registerAdapter(PaymentAdapter());
+  Hive.registerAdapter(TransactionAdapter()); // Add this line
   
   // Open all boxes
   await Hive.openBox<Address>('addresses');
@@ -24,7 +26,8 @@ void main() async {
   await Hive.openBox<User>('userBox');
   await Hive.openBox<int>('selectedAddressIndexBox');
   await Hive.openBox<CartItem>('cartBox');
-  await Hive.openBox<Payment>('paymentBox'); // Add this line
+  await Hive.openBox<Payment>('paymentBox');
+  await Hive.openBox<Transaction>('transactionBox'); // Add this line
   
   runApp(const MyApp());
 }

@@ -28,6 +28,9 @@ class Payment extends HiveObject {
   @HiveField(7)
   String orderDetails;
 
+  @HiveField(8)
+  String transactionId; // New field to link to Transaction
+
   Payment({
     required this.id,
     required this.totalAmount,
@@ -37,6 +40,7 @@ class Payment extends HiveObject {
     this.status = 'pending',
     this.proofImagePath,
     required this.orderDetails,
+    required this.transactionId, // Add to constructor
   });
 
   bool get isExpired => DateTime.now().isAfter(expiresAt);

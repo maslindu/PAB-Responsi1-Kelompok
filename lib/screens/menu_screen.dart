@@ -11,6 +11,7 @@ import 'edit_profile_screen.dart'; // Import the edit profile screen
 import '../models/user.dart'; // Import User model
 import 'dart:io'; // Import dart:io for File
 import '../models/payment.dart';
+import '../models/transaction.dart'; // Import Transaction model
 import 'payment_screen.dart';
 
 class MenuScreen extends StatefulWidget {
@@ -25,6 +26,7 @@ class _MenuScreenState extends State<MenuScreen> {
   late Box<User> _userBox;
   late Box<Address> _addressBox;
   late Box<int> _selectedAddressIndexBox;
+  late Box<Transaction> _transactionBox; // Declare transaction box
 
   @override
   void initState() {
@@ -35,6 +37,7 @@ class _MenuScreenState extends State<MenuScreen> {
     _userBox = Hive.box<User>('userBox');
     _addressBox = Hive.box<Address>('addresses');
     _selectedAddressIndexBox = Hive.box<int>('selectedAddressIndexBox');
+    _transactionBox = Hive.box<Transaction>('transactionBox'); // Initialize transaction box
   }
 
   @override
@@ -44,26 +47,40 @@ class _MenuScreenState extends State<MenuScreen> {
   }
 
   Payment? get _activePendingPayment {
-  final paymentBox = Hive.box<Payment>('paymentBox');
-  for (var payment in paymentBox.values) {
-    if (payment.status == 'pending' && !payment.isExpired) {
-      return payment;
+    final paymentBox = Hive.box<Payment>('paymentBox');
+    for (var payment in paymentBox.values) {
+      if (payment.status == 'pending' && !payment.isExpired) {
+        return payment;
+      }
+    }
+    return null;
+  }
+
+  void _showPaymentDialog() {
+    final pendingPayment = _activePendingPayment;
+    if (pendingPayment != null) {
+      final transaction = _transactionBox.get(pendingPayment.transactionId); // Retrieve transaction
+      if (transaction != null) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PaymentScreen(
+              payment: pendingPayment,
+              transaction: transaction, // Pass transaction
+            ),
+          ),
+        );
+      } else {
+        // Handle case where transaction is not found (e.g., show an error message)
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: Transaction not found for this payment.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
-  return null;
-}
-
-void _showPaymentDialog() {
-  final pendingPayment = _activePendingPayment;
-  if (pendingPayment != null) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => PaymentScreen(payment: pendingPayment),
-      ),
-    );
-  }
-}
 
   void _onItemTapped(int index) {
     setState(() {
@@ -162,20 +179,34 @@ void _showPaymentDialog() {
                                 await Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => const EditProfileScreen(),
+                                    builder: (context) =>
+                                        const EditProfileScreen(),
                                   ),
                                 );
                                 // No need to setState here, ValueListenableBuilder handles it
                               },
                               child: CircleAvatar(
                                 backgroundColor: Colors.white.withOpacity(0.3),
-                                backgroundImage: (currentUser?.profilePicturePath != null &&
-                                        currentUser!.profilePicturePath.startsWith('assets/'))
+                                backgroundImage:
+                                    (currentUser?.profilePicturePath != null &&
+                                        currentUser!.profilePicturePath
+                                            .startsWith('assets/'))
                                     ? AssetImage(currentUser.profilePicturePath)
-                                    : (currentUser?.profilePicturePath != null &&
-                                            currentUser?.profilePicturePath.isNotEmpty == true)
-                                        ? FileImage(File(currentUser!.profilePicturePath)) as ImageProvider<Object>
-                                        : AssetImage('assets/images/default_profile.png'),
+                                    : (currentUser?.profilePicturePath !=
+                                              null &&
+                                          currentUser
+                                                  ?.profilePicturePath
+                                                  ?.isNotEmpty ==
+                                              true)
+                                    ? FileImage(
+                                            File(
+                                              currentUser!.profilePicturePath,
+                                            ),
+                                          )
+                                          as ImageProvider<Object>
+                                    : AssetImage(
+                                        'assets/images/default_profile.png',
+                                      ),
                               ),
                             ),
                             GestureDetector(
@@ -187,34 +218,46 @@ void _showPaymentDialog() {
                                     color: Colors.white,
                                     size: 28,
                                   ),
-                                  
+
                                   // Payment notification dot
                                   ValueListenableBuilder<Box<Payment>>(
-                                    valueListenable: Hive.box<Payment>('paymentBox').listenable(),
+                                    valueListenable: Hive.box<Payment>(
+                                      'paymentBox',
+                                    ).listenable(),
                                     builder: (context, box, _) {
-                                      final hasPendingPayment = _activePendingPayment != null;
-                                      
-                                      if (!hasPendingPayment && _viewModel.cartItemCount == 0) {
+                                      final hasPendingPayment =
+                                          _activePendingPayment != null;
+
+                                      if (!hasPendingPayment &&
+                                          _viewModel.cartItemCount == 0) {
                                         return SizedBox.shrink();
                                       }
-                                      
+
                                       return Positioned(
                                         right: 0,
                                         top: 0,
                                         child: Container(
                                           padding: EdgeInsets.all(2),
                                           decoration: BoxDecoration(
-                                            color: hasPendingPayment ? Colors.yellow : Colors.orange,
-                                            borderRadius: BorderRadius.circular(10),
+                                            color: hasPendingPayment
+                                                ? Colors.yellow
+                                                : Colors.orange,
+                                            borderRadius: BorderRadius.circular(
+                                              10,
+                                            ),
                                           ),
                                           constraints: BoxConstraints(
                                             minWidth: 16,
                                             minHeight: 16,
                                           ),
                                           child: Text(
-                                            hasPendingPayment ? '!' : '${_viewModel.cartItemCount}',
+                                            hasPendingPayment
+                                                ? '!'
+                                                : '${_viewModel.cartItemCount}',
                                             style: TextStyle(
-                                              color: hasPendingPayment ? Colors.black : Colors.white,
+                                              color: hasPendingPayment
+                                                  ? Colors.black
+                                                  : Colors.white,
                                               fontSize: 10,
                                               fontWeight: FontWeight.bold,
                                             ),
@@ -249,7 +292,10 @@ void _showPaymentDialog() {
                             controller: _searchController,
                             decoration: InputDecoration(
                               hintText: 'Search Menu',
-                              prefixIcon: Icon(Icons.search, color: Colors.grey),
+                              prefixIcon: Icon(
+                                Icons.search,
+                                color: Colors.grey,
+                              ),
                               border: InputBorder.none,
                               contentPadding: EdgeInsets.symmetric(
                                 horizontal: 16,
@@ -262,79 +308,81 @@ void _showPaymentDialog() {
                     ),
                   ),
 
-              // Address Section
-              ValueListenableBuilder<Box<int>>(
-                valueListenable: _selectedAddressIndexBox.listenable(),
-                builder: (context, box, _) {
-                  final selectedIndex = box.get('selected');
-                  final selectedAddress = selectedIndex != null && _addressBox.isNotEmpty
-                      ? _addressBox.getAt(selectedIndex)
-                      : null;
+                  // Address Section
+                  ValueListenableBuilder<Box<int>>(
+                    valueListenable: _selectedAddressIndexBox.listenable(),
+                    builder: (context, box, _) {
+                      final selectedIndex = box.get('selected');
+                      final selectedAddress =
+                          selectedIndex != null && _addressBox.isNotEmpty
+                          ? _addressBox.getAt(selectedIndex)
+                          : null;
 
-                  return Container(
-                    margin: EdgeInsets.symmetric(horizontal: 16),
-                    padding: EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Color.fromRGBO(254, 216, 102, 1),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.black, width: 2),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.location_on, color: Colors.black),
-                        SizedBox(width: 8),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                selectedAddress?.recipientName ??
-                                    'Nama Penerima', // Use selected address or default
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ), // Added fontSize
-                              ),
-                              Text(
-                                selectedAddress?.fullAddress ?? 'Alamat penerima',
-                              ), // Use selected address or default
-                            ],
-                          ),
+                      return Container(
+                        margin: EdgeInsets.symmetric(horizontal: 16),
+                        padding: EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Color.fromRGBO(254, 216, 102, 1),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.black, width: 2),
                         ),
-                        GestureDetector(
-                          onTap: () async {
-                            await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => AddressListScreen(),
-                              ),
-                            );
-                            // No need to setState here, ValueListenableBuilder handles it
-                          },
-                          child: Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: Colors.black),
-                            ),
-                            child: Text(
-                              'Ganti Alamat',
-                              style: TextStyle(
-                                color: Colors.black,
-                                fontWeight: FontWeight.w500,
+                        child: Row(
+                          children: [
+                            Icon(Icons.location_on, color: Colors.black),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    selectedAddress?.recipientName ??
+                                        'Nama Penerima', // Use selected address or default
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ), // Added fontSize
+                                  ),
+                                  Text(
+                                    selectedAddress?.fullAddress ??
+                                        'Alamat penerima',
+                                  ), // Use selected address or default
+                                ],
                               ),
                             ),
-                          ),
+                            GestureDetector(
+                              onTap: () async {
+                                await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => AddressListScreen(),
+                                  ),
+                                );
+                                // No need to setState here, ValueListenableBuilder handles it
+                              },
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: Colors.black),
+                                ),
+                                child: Text(
+                                  'Ganti Alamat',
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  );
-                },
-              ),
+                      );
+                    },
+                  ),
 
                   SizedBox(height: 20),
 
@@ -345,7 +393,10 @@ void _showPaymentDialog() {
                       alignment: Alignment.centerLeft,
                       child: Text(
                         'Recommendation Menu',
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
@@ -389,7 +440,8 @@ void _showPaymentDialog() {
                       itemCount: _viewModel.categories.length,
                       itemBuilder: (context, index) {
                         final category = _viewModel.categories[index];
-                        final isSelected = _viewModel.selectedCategory == category;
+                        final isSelected =
+                            _viewModel.selectedCategory == category;
 
                         Color borderColor;
                         Color backgroundColor;
@@ -469,7 +521,9 @@ void _showPaymentDialog() {
                       );
                     },
                   ),
-                  SizedBox(height: 80), // Add extra space at the bottom to prevent overflow
+                  SizedBox(
+                    height: 80,
+                  ), // Add extra space at the bottom to prevent overflow
                 ],
               );
             },
