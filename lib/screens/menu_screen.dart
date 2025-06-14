@@ -461,16 +461,6 @@ class _MenuScreenState extends State<MenuScreen> {
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
-                                  IconButton(
-                                    onPressed: () {
-                                      _viewModel.refreshRecommendations();
-                                    },
-                                    icon: Icon(
-                                      Icons.refresh,
-                                      color: Colors.grey[600],
-                                    ),
-                                    tooltip: 'Refresh Recommendations',
-                                  ),
                                 ],
                               ),
                             ),

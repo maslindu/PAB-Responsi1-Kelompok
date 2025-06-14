@@ -76,10 +76,20 @@ class Transaction extends HiveObject {
   }
 
   String get paymentStatusText {
+    // FIX: Check if transaction failed first
+    if (status == 'failed') {
+      return 'Gagal';
+    }
+    
     if (paymentMethod == 'Tunai') {
       return 'COD (Cash on Delivery)';
     } else {
-      return 'Lunas';
+      // For transfer payments, check if paid
+      if (status == 'pending') {
+        return 'Belum Lunas';
+      } else {
+        return 'Lunas';
+      }
     }
   }
 

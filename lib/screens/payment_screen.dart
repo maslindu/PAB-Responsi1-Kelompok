@@ -29,11 +29,13 @@ class _PaymentScreenState extends State<PaymentScreen> {
   File? _proofImage;
   bool _isProcessing = false;
   late Box<Transaction> _transactionBox;
+  late Box<String> _lastTransactionIdBox; // Add this
 
   @override
   void initState() {
     super.initState();
     _transactionBox = Hive.box<Transaction>('transactionBox');
+    _lastTransactionIdBox = Hive.box<String>('lastTransactionIdBox'); // Initialize this
     
     // If payment method is cash, redirect immediately to OrderStatusScreen
     if (widget.payment.paymentMethod == 'Tunai') {
@@ -83,6 +85,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
     // Update transaction status to failed
     widget.transaction.status = 'failed';
     await _transactionBox.put(widget.transaction.id, widget.transaction);
+    
+    // CLEAR THE LAST TRANSACTION ID TO REMOVE NOTIFICATION
+    await _lastTransactionIdBox.delete('lastTransactionId');
     
     showDialog(
       context: context,

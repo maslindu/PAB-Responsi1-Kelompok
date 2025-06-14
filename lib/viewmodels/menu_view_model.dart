@@ -37,13 +37,13 @@ class MenuViewModel extends ChangeNotifier {
       notifyListeners(); // Notify listeners when selected address changes
     });
 
-    // Start the recommendation rotation timer
+    // Start the recommendation rotation timer - CHANGED TO 15 SECONDS
     _startRecommendationTimer();
   }
 
-  // Start timer to rotate recommendations every 30 seconds
+  // Start timer to rotate recommendations every 15 seconds - CHANGED FROM 30 TO 15
   void _startRecommendationTimer() {
-    _recommendationTimer = Timer.periodic(Duration(seconds: 30), (timer) {
+    _recommendationTimer = Timer.periodic(Duration(seconds: 15), (timer) {
       // Only update recommendations if search is not active
       if (_searchQuery.isEmpty) {
         notifyListeners(); // This will cause recommendedItems to regenerate
@@ -193,7 +193,7 @@ class MenuViewModel extends ChangeNotifier {
     return filteredItems;
   }
 
-  // Updated recommendedItems getter with rotation logic
+  // Updated recommendedItems getter with 15-second rotation logic
   List<MenuItem> get recommendedItems {
     if (_searchQuery.isNotEmpty) {
       return []; // Return empty list when searching
@@ -203,7 +203,8 @@ class MenuViewModel extends ChangeNotifier {
     List<MenuItem> shuffledItems = List.from(_menuItems);
     
     // Use current time as seed for consistent rotation during the same time period
-    int seed = (DateTime.now().millisecondsSinceEpoch ~/ 30000); // Changes every 30 seconds
+    // CHANGED: Now changes every 15 seconds instead of 30
+    int seed = (DateTime.now().millisecondsSinceEpoch ~/ 15000); // Changes every 15 seconds
     Random seededRandom = Random(seed);
     
     // Shuffle the list with the seeded random
@@ -217,12 +218,7 @@ class MenuViewModel extends ChangeNotifier {
     return shuffledItems.take(4).toList();
   }
 
-  // Method to manually refresh recommendations
-  void refreshRecommendations() {
-    if (_searchQuery.isEmpty) {
-      notifyListeners();
-    }
-  }
+  // REMOVED: refreshRecommendations method since we don't need manual refresh anymore
 
   // Check if search is active
   bool get isSearchActive => _searchQuery.isNotEmpty;
