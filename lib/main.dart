@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'screens/menu_screen.dart';
+import 'screens/loading_screen.dart'; // Import the loading screen
 import 'models/address.dart';
 import 'models/menu_item.dart';
 import 'models/user.dart';
@@ -30,6 +32,14 @@ void main() async {
   await Hive.openBox<Transaction>('transactionBox');
   await Hive.openBox<String>('lastTransactionIdBox'); // Open last transaction ID box
   
+  // Set system UI overlay style (optional)
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+    ),
+  );
+  
   runApp(const MyApp());
 }
 
@@ -46,7 +56,9 @@ class MyApp extends StatelessWidget {
         scaffoldBackgroundColor: Colors.white,
         fontFamily: 'Roboto',
       ),
-      home: MenuScreen(),
+      home: LoadingScreen(
+        nextScreen: MenuScreen(), // Navigate to MenuScreen after loading
+      ),
     );
   }
 }
